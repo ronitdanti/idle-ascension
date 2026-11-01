@@ -19,8 +19,8 @@ export interface GameState {
   runKi: Decimal;
   /** Ki produced ever. Monotonic. Drives unlocks. */
   totalKi: Decimal;
-  /** Seconds of x2 Ki remaining for active play. */
-  restedSec: number;
+  /** Ki Flux: banked bonus game-seconds, charged by time away and spent by Speed Up. */
+  fluxSec: number;
   /** Unlocked zone ids. Persisted so each unlock is announced exactly once. */
   unlocked: Record<string, boolean>;
   /** Named one-shot flags (e.g. spoilsCollected). */
@@ -41,7 +41,7 @@ export function newState(now: number): GameState {
     ki: D(10),
     runKi: D(10),
     totalKi: D(10),
-    restedSec: 0,
+    fluxSec: 0,
     unlocked: { training: true },
     flags: {},
     stats: { playTimeSec: 0, offlineSec: 0, sessions: 1 },
@@ -63,6 +63,6 @@ export function offlineCapSec(_s: GameState): number {
   return CONFIG.offlineCapSec;
 }
 
-export function restedCapSec(_s: GameState): number {
-  return CONFIG.restedCapSec;
+export function fluxCapSec(_s: GameState): number {
+  return CONFIG.fluxCapSec;
 }

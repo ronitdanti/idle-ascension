@@ -1,7 +1,6 @@
 import { game } from '../app/runtime';
 import { ui, useTick, useUi } from '../app/ui-store';
 import type { TabId } from '../content/zones';
-import { currentKiPerSec } from '../core/engine';
 import { formatNum } from '../core/format';
 import { Glyph, DojoIcon, ForgeIcon, FrontierIcon, HomeIcon, KiIcon, LockIcon, MenuIcon, MoreIcon } from './icons';
 import { Home, More, ZoneScreen } from './screens';
@@ -30,8 +29,8 @@ function Header() {
           <span>{formatNum(s.ki, n)}</span>
         </div>
         <div class="readout-rate">
-          <b>{formatNum(currentKiPerSec(s), n, 1)}</b> Ki/s
-          {s.restedSec > 0 && <span class="rested-pill"> · Rested x2</span>}
+          <b>{formatNum(game.kiPerSec, n, 1)}</b> Ki/s
+          {game.activeSpeed > 1 && <span class="rested-pill"> · Speed x{game.activeSpeed}</span>}
         </div>
       </div>
       <button class="icon-btn" onClick={() => ui.set({ sheet: 'menu' })} aria-label="Status and menu">

@@ -521,6 +521,10 @@ button {
   font-weight: 800;
   font-size: 0.8125rem;
 }
+.seg button:disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
 .seg button[aria-pressed='true'] {
   background: var(--ember);
   color: #1a0a00;

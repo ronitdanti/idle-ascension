@@ -5,11 +5,11 @@ import { ui, useUi } from '../app/ui-store';
 import { CONFIG } from '../content/config';
 import { ZONES, zoneById } from '../content/zones';
 import { D } from '../core/bignum';
-import { offlineCapSec, newState, restedCapSec, type Notation } from '../core/state';
+import { fluxCapSec, offlineCapSec, newState, type Notation } from '../core/state';
 import { formatDuration, formatNum } from '../core/format';
 import { serialize } from '../core/save';
 import { Bar, Kv, Segmented, Sheet, Toggle } from './components';
-import { Glyph, KiIcon } from './icons';
+import { FluxIcon, Glyph, KiIcon } from './icons';
 
 const close = () => ui.set({ sheet: null });
 const open = (sheet: NonNullable<typeof ui.state.sheet>) => ui.set({ sheet });
@@ -81,10 +81,17 @@ function Welcome() {
           </div>
         )}
         <Kv k="Time counted" v={formatDuration(r.countedSec)} />
-        <Kv k="Rested banked" v={`+${formatDuration(r.restedGainedSec)}`} />
-        {r.restedGainedSec > 0 && (
+        <Kv
+          k="Ki Flux charged"
+          v={
+            <>
+              <FluxIcon size={14} /> +{formatDuration(r.fluxGainedSec)}
+            </>
+          }
+        />
+        {r.fluxGainedSec > 0 && (
           <div class="notice good" style={{ marginTop: 8 }}>
-            Rested: x{CONFIG.restedMultiplier} Ki while you play, for {formatDuration(game.state.restedSec)}.
+            Charged Meditation: you hold {formatDuration(game.state.fluxSec)} of Ki Flux. Spend it on Speed Up from the Home screen.
           </div>
         )}
       </div>
@@ -113,14 +120,14 @@ function Welcome() {
 function Menu() {
   const s = game.state;
   const u = useUi();
-  const cap = restedCapSec(s);
+  const cap = fluxCapSec(s);
   return (
     <Sheet title="Status" onClose={close}>
       <div>
-        <h3>Rested</h3>
-        <Bar value={s.restedSec / cap} accent="var(--volt)" label={s.restedSec > 0 ? `x${CONFIG.restedMultiplier} Ki for ${formatDuration(s.restedSec)}` : 'Not rested'} />
+        <h3>Ki Flux</h3>
+        <Bar value={s.fluxSec / cap} accent="var(--volt)" label={`${formatDuration(s.fluxSec)} / ${formatDuration(cap)}`} />
         <div class="muted small" style={{ marginTop: 6 }}>
-          Time away fills Rested (up to {formatDuration(cap)}). While it lasts, active play earns double Ki.
+          Every {Math.round(1 / CONFIG.fluxPerAwaySec)}s away charges 1s of Flux (up to {formatDuration(cap)}). Speed Up spends it to run the game faster.
         </div>
       </div>
       <div>
@@ -359,6 +366,13 @@ function Debug() {
             Jump to {nextZone.name}
           </button>
         )}
+      </div>
+      <div>
+        <h3>Ki Flux</h3>
+        <div class="row">
+          <button class="btn ghost grow" onClick={() => { s.fluxSec = fluxCapSec(s); refresh(); }}>Fill</button>
+          <button class="btn ghost grow" onClick={() => { s.fluxSec = 0; refresh(); }}>Empty</button>
+        </div>
       </div>
       <div>
         <h3>Time warp (x{game.timeWarp})</h3>

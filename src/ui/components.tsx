@@ -74,13 +74,13 @@ export function Segmented<T extends string>({
   onChange,
 }: {
   value: T;
-  options: Array<{ id: T; label: string }>;
+  options: Array<{ id: T; label: string; disabled?: boolean }>;
   onChange: (v: T) => void;
 }) {
   return (
     <div class="seg" role="group">
       {options.map((o) => (
-        <button key={o.id} aria-pressed={o.id === value} onClick={() => onChange(o.id)}>
+        <button key={o.id} aria-pressed={o.id === value} disabled={o.disabled} onClick={() => onChange(o.id)}>
           {o.label}
         </button>
       ))}

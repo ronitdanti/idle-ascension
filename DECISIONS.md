@@ -66,3 +66,30 @@ SPEC forbids asset files, so `scripts/make-icons.mjs` rasterizes the flame-orb m
 - **"We don't need the Tap to Gather Ki mechanic. Let the function be just automatic."** Removed tapping entirely: the `gather` function, the tap stat, the tap config and the tap handler. Ki is now purely automatic. The home orb stays as a visual that grows with Ki/s; it is non-interactive for now. (SPEC's Focus Burst, a hold-to-charge bonus, is a separate optional mechanic planned for Milestone 2; I will raise with the owner whether to keep it, since this note suggests they prefer no manual Ki input.) Old saves load fine: the extra `taps` field is simply ignored.
 - **"The wait for 1000 Ki to unlock Dojo ... is sharp."** Two changes. (1) Placeholder income raised from 1 to 4 Ki/s, so Dojo arrives at about 4 minutes, in line with the SPEC target of about 5 minutes. (2) The "Unlocks in" list now shows a one-line description under each zone, so the player knows what the Dojo does before reaching it. Real pacing comes with the drill economy in Milestone 2.
 - "Proceed as is appropriate": read as general approval of direction, not as confirmation of Milestone 1, so Milestone 2 has not been started.
+
+### 2026-11-01 8:51 PM, Milestone 1
+Notes: Rested x2 is equivalent to offline time and will spiral; drop Focus Burst and tapping; replace Rested with "Charged Meditation" where offline time provides Ki Flux, which pays for a Speed Up.
+
+**Dropped (deviations from SPEC.md, by owner request):**
+- **Focus Burst** (SPEC 5.1) and everything tied to it. SPEC items that mentioned it are re-pointed so future milestones do not build it:
+  - Gravity Chamber's "also boost Focus Burst" milestone effect becomes a Ki Flux effect (flux gain).
+  - Breath branch "offline cap, Rested bonus, Focus Burst" becomes offline cap, Flux gain, Flux cap, Speed Up options.
+  - Essence Shop "Focus Burst size" becomes Flux cap or Flux gain.
+  - Gear stat "Focus Burst size" becomes Flux gain.
+- **Tapping / active Ki input.** No mechanic needs manual input to progress.
+- **Rested x2 Ki** (SPEC section 9). Replaced as below. Cooks ("expands Rested bonus and offline cap") now expand Flux cap and offline cap.
+
+**Why Rested spiraled:** it paid a second reward for the same absence. Offline time already pays Ki 1:1 and Rested then doubled active play for as long as you were away, so leaving the game was strictly better than playing it. Active play also could not be faster than "x2 for a while".
+
+**Charged Meditation (replacement), as built:**
+- **Ki Flux** is a bank of *bonus game-seconds*. Each second away charges **0.25** Flux, up to a **3 h** cap. A full 12 h absence (the offline cap) therefore exactly fills the bank.
+- **Speed Up** has levels **x2, x3, x5**, chosen on the Home screen. At xN each real second runs N game-seconds and burns **(N - 1)** Flux. So Flux is always exactly the number of extra game-seconds you can buy; the level only chooses how fast you spend it. Higher levels do not cost extra per game-second; they just compress time.
+- Speed Up switches itself off when Flux runs out (a toast says so) and always starts at x1 in a new session, so it can never burn Flux unseen.
+- It speeds up the whole simulation (production now; expeditions, ticket accrual and other timers as they arrive), because it is a game-speed boost. Anything with a hard cap (tickets) is already protected by that cap.
+- Flux does not charge while playing and does not boost the offline pass itself, so there is no double payment for one absence.
+
+**Why this does not spiral:** away time A pays A game-seconds of Ki through offline progress, plus 0.25 A of Flux. Spending all of it adds at most 0.25 A more game-seconds. So the bonus is bounded at +25% of what you were already paid for being away, rather than the old "double your active time for as long as you were away". Playing never makes you worse off than idling, and idling does not outrun playing. The Flux cap also means a very long absence cannot be banked beyond 3 h of Speed Up.
+- **Tuning knobs** (all in `CONFIG`): `fluxPerAwaySec` 0.25, `fluxCapSec` 3 h, `speedLevels` [2, 3, 5]. Later techniques and Cooks raise the cap and the charge rate, which is how this feature grows over the 8 week arc.
+- **Debug time-warp is separate** from Speed Up and costs no Flux.
+
+**Save change:** save version 2. Migration 1 to 2 converts old Rested seconds to Flux at the new charge rate (4000 Rested seconds becomes 1000 Flux), capped at the Flux cap, and drops the old field. Tested in unit tests and against a real v1 save in the browser.

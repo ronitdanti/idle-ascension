@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { game } from '../app/runtime';
-import { currentKiPerSec } from '../core/engine';
 import { canDraw } from './icons';
 
 /**
@@ -34,7 +33,7 @@ export function KiOrb() {
       raf = requestAnimationFrame(draw);
       const reduce = game.state.settings.reduceMotion;
       const time = reduce ? 0 : now / 1000;
-      const power = Math.min(1, Math.max(0, Math.log10(Math.max(1, currentKiPerSec(game.state).toNumber())) / 12));
+      const power = Math.min(1, Math.max(0, Math.log10(Math.max(1, game.kiPerSec.toNumber())) / 12));
       const tongues = 7 + Math.round(power * 9);
       const cx = w / 2;
       const cy = h / 2 + 4;

@@ -60,7 +60,7 @@ Never convey state by color alone: pair with an icon or label.
 Hand-built inline SVG in `src/ui/icons.tsx`: 24x24 grid, solid fills plus a 2px
 miter-join outline in the same hue, no gradients. One distinct silhouette and color
 per currency so they read at 16px:
-- Ki: flame-teardrop (ember). Insight: scroll/diamond (violet). Disciples: spiky
+- Ki: flame-teardrop (ember). Ki Flux: lightning bolt (volt). Insight: scroll/diamond (violet). Disciples: spiky
   head (gold). Spoils: faceted hexagon (jade). Gear: hammer-chevron (ember-red).
   Glory: starburst (crimson). Aura: ring with rays (volt). Fragments: four-point
   star (pale gold).

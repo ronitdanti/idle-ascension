@@ -12,6 +12,7 @@ import {
   toJson,
 } from '../src/core/save';
 import { newState } from '../src/core/state';
+import { CONFIG } from '../src/content/config';
 
 const T0 = 1_700_000_000_000;
 
@@ -20,7 +21,7 @@ function richState() {
   s.ki = D('1.234e500');
   s.runKi = D('2e500');
   s.totalKi = D('3.5e777');
-  s.restedSec = 1234.5;
+  s.fluxSec = 1234.5;
   s.unlocked = { training: true, dojo: true };
   s.flags = { spoilsCollected: true };
   s.stats = { playTimeSec: 4000, offlineSec: 9000, sessions: 7 };
@@ -100,12 +101,12 @@ describe('save safety', () => {
       v: SAVE_VERSION,
       ki: 'nonsense',
       totalKi: '-5',
-      restedSec: -10,
+      fluxSec: -10,
       settings: { textScale: 99, notation: 'bogus' },
     });
     expect(s.ki.gte(0)).toBe(true);
     expect(s.totalKi.gte(s.ki)).toBe(true);
-    expect(s.restedSec).toBe(0);
+    expect(s.fluxSec).toBe(0);
     expect(s.settings.textScale).toBe(1.4);
     expect(s.settings.notation).toBe('scientific');
   });
@@ -117,6 +118,20 @@ describe('save safety', () => {
 });
 
 describe('migrations', () => {
+  it('v1 saves convert Rested seconds to Ki Flux and keep everything else', () => {
+    const v1 = { v: 1, ki: '5e9', runKi: '5e9', totalKi: '5e9', restedSec: 4000, unlocked: { training: true, dojo: true }, stats: { taps: 12, playTimeSec: 99 }, lastSeen: T0, createdAt: T0 };
+    const s = parseSave(v1);
+    expect(s.fluxSec).toBe(4000 * CONFIG.fluxPerAwaySec);
+    expect(s.totalKi.eq('5e9')).toBe(true);
+    expect(s.unlocked.dojo).toBe(true);
+    expect('restedSec' in (s as object)).toBe(false);
+  });
+
+  it('v1 Rested above the cap is capped, and a missing value becomes zero', () => {
+    expect(parseSave({ v: 1, restedSec: 1e9 }).fluxSec).toBe(CONFIG.fluxCapSec);
+    expect(parseSave({ v: 1 }).fluxSec).toBe(0);
+  });
+
   it('runs a chain in order and stamps the version', () => {
     const table = {
       0: (d: any) => ({ ...d, a: 1 }),

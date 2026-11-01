@@ -1,8 +1,9 @@
 import { D, ZERO, type Decimal } from './bignum';
+import { CONFIG } from '../content/config';
 import { defaultSettings, newState, type GameState, type Notation, type Settings } from './state';
 
 /** Bump when the save shape changes, and add a migration for the old version. */
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 export type SaveErrorCode = 'corrupt' | 'tooNew' | 'checksum';
 
@@ -21,7 +22,7 @@ export interface SaveData {
   ki: string;
   runKi: string;
   totalKi: string;
-  restedSec: number;
+  fluxSec: number;
   unlocked: Record<string, boolean>;
   flags: Record<string, boolean>;
   stats: GameState['stats'];
@@ -32,7 +33,14 @@ export interface SaveData {
 
 /** migrations[n] upgrades a version-n save to version n+1. */
 export type Migrations = Record<number, (data: any) => any>;
-export const MIGRATIONS: Migrations = {};
+export const MIGRATIONS: Migrations = {
+  // v1 -> v2: "Rested" (x2 Ki) was replaced by Ki Flux. Old Rested seconds convert at the new charge rate.
+  1: (d) => {
+    const { restedSec, ...rest } = d;
+    const old = typeof restedSec === 'number' && Number.isFinite(restedSec) ? Math.max(0, restedSec) : 0;
+    return { ...rest, fluxSec: Math.min(CONFIG.fluxCapSec, old * CONFIG.fluxPerAwaySec) };
+  },
+};
 
 export function migrate(raw: any, migrations: Migrations = MIGRATIONS, target = SAVE_VERSION): any {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new SaveError('corrupt', 'Save is not an object.');
@@ -83,7 +91,7 @@ export function serialize(s: GameState): SaveData {
     ki: s.ki.toString(),
     runKi: s.runKi.toString(),
     totalKi: s.totalKi.toString(),
-    restedSec: s.restedSec,
+    fluxSec: s.fluxSec,
     unlocked: { ...s.unlocked },
     flags: { ...s.flags },
     stats: { ...s.stats },
@@ -108,7 +116,7 @@ export function parseSave(raw: unknown, migrations: Migrations = MIGRATIONS): Ga
     ki,
     runKi: dec(data.runKi, totalKi).max(ki),
     totalKi,
-    restedSec: num(data.restedSec, 0, 0),
+    fluxSec: num(data.fluxSec, 0, 0),
     unlocked,
     flags: boolMap(data.flags),
     stats: {

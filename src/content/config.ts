@@ -14,6 +14,14 @@ export const CONFIG = {
   baseKiPerSec: 4,
 
   offlineCapSec: 12 * 3600,
-  restedCapSec: 4 * 3600,
-  restedMultiplier: 2,
+
+  /**
+   * Charged Meditation. Each second away charges `fluxPerAwaySec` Ki Flux (a bank of bonus
+   * game-seconds). Speed Up runs the game at xN and burns (N - 1) Flux per real second.
+   * 0.25 means a full 12 h absence fills the 3 h cap, and spending all of it adds at most
+   * 25% on top of what offline progress already paid.
+   */
+  fluxPerAwaySec: 0.25,
+  fluxCapSec: 3 * 3600,
+  speedLevels: [2, 3, 5],
 } as const;

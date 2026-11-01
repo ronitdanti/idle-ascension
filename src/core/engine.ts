@@ -1,14 +1,14 @@
 import { D, ZERO, type Decimal } from './bignum';
 import { CONFIG } from '../content/config';
 import { ZONES, type UnlockRule } from '../content/zones';
-import { addKi, offlineCapSec, restedCapSec, type GameState } from './state';
+import { addKi, offlineCapSec, fluxCapSec, type GameState } from './state';
 
 export const TICK_DT = 1 / CONFIG.tickHz;
 
-export type GameEvent = { type: 'unlock'; zone: string };
+export type GameEvent = { type: 'unlock'; zone: string } | { type: 'fluxEmpty' };
 
 export interface StepCtx {
-  /** True when simulating absence: no Rested bonus is used or spent. */
+  /** True when simulating absence. */
   offline: boolean;
   emit?: (e: GameEvent) => void;
 }
@@ -19,29 +19,15 @@ export interface System {
   step(s: GameState, dt: number, ctx: StepCtx): void;
 }
 
-/** Ki per second before any Rested bonus. */
+/** Ki per second at normal speed. */
 export function baseKiPerSec(_s: GameState): Decimal {
   return D(CONFIG.baseKiPerSec);
 }
 
-/** Display rate for the UI: includes Rested only while it is active. */
-export function currentKiPerSec(s: GameState): Decimal {
-  const base = baseKiPerSec(s);
-  return s.restedSec > 0 ? base.mul(CONFIG.restedMultiplier) : base;
-}
-
 const kiSystem: System = {
   id: 'ki',
-  step(s, dt, ctx) {
-    const base = baseKiPerSec(s);
-    let gain = base.mul(dt);
-    if (!ctx.offline && s.restedSec > 0) {
-      // Exact for any dt: only the rested portion of this step gets the bonus.
-      const portion = Math.min(dt, s.restedSec);
-      gain = gain.add(base.mul(portion * (CONFIG.restedMultiplier - 1)));
-      s.restedSec -= portion;
-    }
-    addKi(s, gain);
+  step(s, dt) {
+    addKi(s, baseKiPerSec(s).mul(dt));
   },
 };
 
@@ -97,13 +83,13 @@ export interface OfflineReport {
   countedSec: number;
   capped: boolean;
   kiGained: Decimal;
-  restedGainedSec: number;
+  fluxGainedSec: number;
   unlocks: string[];
 }
 
 /**
  * Apply absence. Clamps negative elapsed time to zero (clock safety), caps at the offline cap,
- * and banks Rested time. Returns null when nothing meaningful elapsed.
+ * and charges Ki Flux. Returns null when nothing meaningful elapsed.
  */
 export function applyOffline(s: GameState, nowMs: number): OfflineReport | null {
   const raw = (nowMs - s.lastSeen) / 1000;
@@ -115,17 +101,18 @@ export function applyOffline(s: GameState, nowMs: number): OfflineReport | null 
   const countedSec = Math.min(awaySec, offlineCapSec(s));
   const before = s.ki;
   const unlocks: string[] = [];
-  advance(s, countedSec, { offline: true, emit: (e) => unlocks.push(e.zone) });
+  advance(s, countedSec, { offline: true, emit: (e) => e.type === 'unlock' && unlocks.push(e.zone) });
   s.stats.offlineSec += countedSec;
 
-  const restedBefore = s.restedSec;
-  s.restedSec = Math.min(restedCapSec(s), s.restedSec + countedSec);
+  const fluxBefore = s.fluxSec;
+  // Never lower Flux if a later upgrade shrinks the cap below what is banked.
+  s.fluxSec = Math.max(fluxBefore, Math.min(fluxCapSec(s), fluxBefore + countedSec * CONFIG.fluxPerAwaySec));
   return {
     awaySec,
     countedSec,
     capped: awaySec > countedSec,
     kiGained: s.ki.sub(before).max(ZERO),
-    restedGainedSec: s.restedSec - restedBefore,
+    fluxGainedSec: s.fluxSec - fluxBefore,
     unlocks,
   };
 }

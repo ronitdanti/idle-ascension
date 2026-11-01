@@ -2,6 +2,10 @@
 
 Tuning changes and simulator results, newest first. Targets are SPEC section 14.
 
+## 2026-11-01, Charged Meditation replaces Rested
+Removed: Rested x2 (4 h cap). Added: Ki Flux, 0.25 charge per second away, 3 h cap, Speed Up x2/x3/x5 burning (N-1) Flux per real second. Net bonus from Flux is bounded at +25% of away time; reasoning in DECISIONS.md. The simulator does not model Flux yet because its bots are always active and nothing is bought; revisit in Milestone 2 when check-in/away patterns matter (casual bot: ~4 five-minute check-ins plus one 20-minute session per day).
+Open knobs: charge rate (0.25), cap (3 h), speed levels. If playtests feel too stingy, raise the charge rate first.
+
 ## 2026-11-01, after first playtest
 Placeholder income 1 to 4 Ki/s (tap removed per PLAYTEST.md). Dojo now at about 4 minutes (sim reports 5m at its 5-minute check-in granularity, target 5m). Archive 3h 30m and Frontier 5d 18h are still far off target; that is the placeholder economy, tuned in Milestone 2.
 

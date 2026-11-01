@@ -64,6 +64,8 @@ function pumpEvents(): void {
       const z = zoneById(ev.zone);
       ui.toast(`${z.name} unlocked`, z.glyph, z.accent);
       buzz(30);
+    } else if (ev.type === 'fluxEmpty') {
+      ui.toast('Ki Flux spent. Back to normal speed', '力', 'var(--volt)');
     }
   }
 }

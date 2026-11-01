@@ -1,11 +1,11 @@
-import { game } from '../app/runtime';
+import { buzz, game } from '../app/runtime';
 import { ui } from '../app/ui-store';
 import { ZONES, zoneById, type TabId, type ZoneDef } from '../content/zones';
 import { CONFIG } from '../content/config';
-import { currentKiPerSec } from '../core/engine';
 import { formatDuration, formatNum } from '../core/format';
 import { D } from '../core/bignum';
 import { Bar, Panel } from './components';
+import { fluxCapSec } from '../core/state';
 import { Glyph, LockIcon } from './icons';
 import { KiOrb } from './KiOrb';
 
@@ -30,6 +30,45 @@ export function UnlockProgress({ zone }: { zone: ZoneDef }) {
   return null;
 }
 
+/** Ki Flux from time away, spent on Speed Up. See DECISIONS.md for the balance reasoning. */
+function ChargedMeditation() {
+  const s = game.state;
+  const cap = fluxCapSec(s);
+  const active = game.activeSpeed;
+  const pick = (level: number) => {
+    game.setSpeed(level);
+    buzz(10);
+  };
+  return (
+    <Panel title="Charged Meditation" accent="var(--volt)">
+      <div class="stack">
+        <Bar
+          value={s.fluxSec / cap}
+          accent="var(--volt)"
+          label={`Ki Flux ${formatDuration(s.fluxSec)} / ${formatDuration(cap)}`}
+        />
+        <div class="seg" role="group" aria-label="Speed Up">
+          <button aria-pressed={active === 1} onClick={() => pick(1)}>
+            x1
+          </button>
+          {CONFIG.speedLevels.map((l) => (
+            <button key={l} aria-pressed={active === l} disabled={s.fluxSec <= 0} onClick={() => pick(l)}>
+              x{l}
+            </button>
+          ))}
+        </div>
+        <div class="muted small">
+          {active > 1
+            ? `Running at x${active}. Your Flux lasts ${formatDuration(s.fluxSec / (active - 1))} at this speed.`
+            : s.fluxSec > 0
+              ? 'Spend Ki Flux to run the whole game faster. Higher speeds burn Flux faster.'
+              : 'Time away charges Ki Flux. Spend it later to run the game faster.'}
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
 export function Home() {
   const s = game.state;
   const n = s.settings.notation;
@@ -46,20 +85,16 @@ export function Home() {
         <div class="chips">
           <div class="chip">
             <div class="k">Ki / sec</div>
-            <div class="v">{formatNum(currentKiPerSec(s), n, 1)}</div>
+            <div class="v">{formatNum(game.kiPerSec, n, 1)}</div>
           </div>
           <div class="chip">
             <div class="k">Lifetime Ki</div>
             <div class="v">{formatNum(s.totalKi, n)}</div>
           </div>
-          {s.restedSec > 0 && (
-            <div class="chip" style={{ borderColor: 'var(--volt)' }}>
-              <div class="k" style={{ color: 'var(--volt)' }}>Rested x{CONFIG.restedMultiplier}</div>
-              <div class="v">{formatDuration(s.restedSec)}</div>
-            </div>
-          )}
         </div>
       </Panel>
+
+      <ChargedMeditation />
 
       <Panel title="Unlocks in" accent="var(--gold)">
         {next.length === 0 && !showForge && <div class="muted">Everything has been found. For now.</div>}
@@ -86,7 +121,7 @@ export function Home() {
 
       <Panel>
         <div class="muted small">
-          Early build. This foundation has the engine, saving and offline progress. Drills, upgrades and Focus Burst arrive next.
+          Early build. This foundation has the engine, saving and offline progress. Drills and upgrades arrive next.
         </div>
       </Panel>
     </div>

@@ -27,6 +27,13 @@ export const KiIcon = (p: P) => (
   </Svg>
 );
 
+/** Ki Flux: a lightning bolt. */
+export const FluxIcon = (p: P) => (
+  <Svg color="var(--volt)" {...p}>
+    <path d="M14 2 L5 13.5 L11 13.5 L9.5 22 L19 10 L13 10 Z" />
+  </Svg>
+);
+
 export const HomeIcon = (p: P) => (
   <Svg {...p}>
     <path d="M2 11 L12 3 L22 11 L19 11 L19 21 L5 21 L5 11 Z" fill="none" />
