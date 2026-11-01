@@ -4,6 +4,11 @@ PWA for Android Chrome. The full design is in SPEC.md. Read it completely at the
 start of every session. SPEC.md is the source of truth for design; if you
 deviate from it, record why in DECISIONS.md.
 
+## Start of every session
+Read, in this order: SPEC.md, DESIGN.md, DECISIONS.md, BALANCE.md, PLAYTEST.md,
+and STATUS.md. Then check `git log` for recent work. Briefly tell the owner where
+the project stands and what you plan to do next before making changes.
+
 ## Working rules
 - Build milestone by milestone, in the order given in SPEC.md section 17. Do not
   start the next milestone until the owner confirms the current one.
@@ -28,6 +33,8 @@ deviate from it, record why in DECISIONS.md.
 
 ## When a milestone is finished
 Deploy, give the owner the URL, summarize what to playtest, and wait for feedback.
+Update STATUS.md: milestones completed, current milestone, known bugs, open
+questions for the owner, and the next recommended step.
 
 ## Owner context
 - Device: Android 16, Chrome 156.0.8078.73. Played in portrait on a phone.
@@ -52,4 +59,4 @@ details, animation and effect style, and sound design.
   type, icon language, motion style, naming conventions, tone of the story text)
   and follow it consistently.
 - Aim for a distinctive, polished look that doesn't read as a generic template.
-- The owner will give feedback after each milestone; revise freely based on i
+- The owner will give feedback after each milestone; revise freely based on it.
