@@ -274,30 +274,19 @@ button {
   flex: 1;
 }
 
-/* ---------- Ki orb ---------- */
-.orb-wrap {
+/* ---------- hero scene ---------- */
+.scene-wrap {
   position: relative;
-  height: 250px;
-  margin: -4px -4px 0;
+  height: 230px;
+  margin: -4px -4px 10px;
+  border: 2px solid var(--line);
+  background: #0a0520;
 }
-.orb-wrap canvas {
+.scene-wrap canvas {
   width: 100%;
   height: 100%;
   display: block;
   pointer-events: none;
-}
-.orb-hint {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 4px;
-  text-align: center;
-  font-weight: 900;
-  font-size: 0.75rem;
-  letter-spacing: 0.2em;
-  color: var(--ember-hot);
-  pointer-events: none;
-  text-transform: uppercase;
 }
 
 /* ---------- stat chips ---------- */
@@ -764,4 +753,126 @@ input[type='text'] {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ---------- training: sub-nav, drills, upgrades ---------- */
+.subnav {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.subnav button {
+  position: relative;
+  min-height: 44px;
+  background: var(--ink-2);
+  border: 2px solid var(--line);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+.subnav button[aria-selected='true'] {
+  background: var(--ember);
+  color: #1a0a00;
+  border-color: #000;
+  box-shadow: 3px 3px 0 #000;
+}
+.dot-ready {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 9px;
+  height: 9px;
+  background: var(--jade);
+  border: 2px solid var(--ink-0);
+  border-radius: 50%;
+}
+.drill,
+.upgrade {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: var(--ink-1);
+  border: 2px solid var(--line);
+  border-left: 5px solid var(--accent, var(--line));
+}
+.drill.can,
+.upgrade.can {
+  border-color: var(--jade);
+  border-left-color: var(--accent, var(--jade));
+}
+.drill-tier {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  background: var(--accent, var(--ember));
+  color: #1a0a00;
+  font-weight: 900;
+  transform: skewX(-8deg);
+  border: 2px solid #000;
+}
+.drill-main,
+.upgrade-main {
+  flex: 1;
+  min-width: 0;
+}
+.drill-top {
+  font-size: 0.9375rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.drill-rate {
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+.drill-next {
+  margin-top: 5px;
+}
+.drill-next .bar {
+  height: 16px;
+}
+.drill-next .bar > span {
+  font-size: 0.625rem;
+}
+.btn.buy {
+  flex: none;
+  min-width: 84px;
+  min-height: 52px;
+  padding: 4px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.15;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.btn.buy small {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* ---------- multiplier breakdown ---------- */
+.mult-total {
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: var(--ember-hot);
+  line-height: 1.1;
+}
+.mult-line {
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--line);
+}
+.mult-line:last-child {
+  border-bottom: 0;
+}
+.mult-line .eq {
+  color: var(--mute);
+  font-size: 0.75rem;
 }

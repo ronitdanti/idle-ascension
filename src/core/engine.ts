@@ -1,7 +1,8 @@
-import { D, ZERO, type Decimal } from './bignum';
+import { ZERO, type Decimal } from './bignum';
 import { CONFIG } from '../content/config';
 import { ZONES, type UnlockRule } from '../content/zones';
-import { addKi, offlineCapSec, fluxCapSec, type GameState } from './state';
+import { addKi, offlineCapSec, type GameState } from './state';
+import { fluxCapSec, fluxChargeRate, kiPerSec } from './training';
 
 export const TICK_DT = 1 / CONFIG.tickHz;
 
@@ -19,15 +20,10 @@ export interface System {
   step(s: GameState, dt: number, ctx: StepCtx): void;
 }
 
-/** Ki per second at normal speed. */
-export function baseKiPerSec(_s: GameState): Decimal {
-  return D(CONFIG.baseKiPerSec);
-}
-
 const kiSystem: System = {
   id: 'ki',
   step(s, dt) {
-    addKi(s, baseKiPerSec(s).mul(dt));
+    addKi(s, kiPerSec(s).mul(dt));
   },
 };
 
@@ -106,7 +102,7 @@ export function applyOffline(s: GameState, nowMs: number): OfflineReport | null 
 
   const fluxBefore = s.fluxSec;
   // Never lower Flux if a later upgrade shrinks the cap below what is banked.
-  s.fluxSec = Math.max(fluxBefore, Math.min(fluxCapSec(s), fluxBefore + countedSec * CONFIG.fluxPerAwaySec));
+  s.fluxSec = Math.max(fluxBefore, Math.min(fluxCapSec(s), fluxBefore + countedSec * fluxChargeRate(s)));
   return {
     awaySec,
     countedSec,

@@ -5,9 +5,10 @@ import { ui, useUi } from '../app/ui-store';
 import { CONFIG } from '../content/config';
 import { ZONES, zoneById } from '../content/zones';
 import { D } from '../core/bignum';
-import { fluxCapSec, offlineCapSec, newState, type Notation } from '../core/state';
+import { offlineCapSec, newState, type Notation } from '../core/state';
 import { formatDuration, formatNum } from '../core/format';
 import { serialize } from '../core/save';
+import { breakdown, fluxCapSec, fluxChargeRate } from '../core/training';
 import { Bar, Kv, Segmented, Sheet, Toggle } from './components';
 import { FluxIcon, Glyph, KiIcon } from './icons';
 
@@ -57,6 +58,8 @@ export function Sheets() {
       return <Debug />;
     case 'reset':
       return <Reset />;
+    case 'breakdown':
+      return <BreakdownSheet />;
     default:
       return null;
   }
@@ -127,7 +130,7 @@ function Menu() {
         <h3>Ki Flux</h3>
         <Bar value={s.fluxSec / cap} accent="var(--volt)" label={`${formatDuration(s.fluxSec)} / ${formatDuration(cap)}`} />
         <div class="muted small" style={{ marginTop: 6 }}>
-          Every {Math.round(1 / CONFIG.fluxPerAwaySec)}s away charges 1s of Flux (up to {formatDuration(cap)}). Speed Up spends it to run the game faster.
+          Every {Math.round(1 / fluxChargeRate(s))}s away charges 1s of Flux (up to {formatDuration(cap)}). Speed Up spends it to run the game faster.
         </div>
       </div>
       <div>
@@ -460,6 +463,66 @@ function Recovery({ kind }: { kind: 'unreadable' | 'tooNew' }) {
           )}
         </div>
       )}
+    </Sheet>
+  );
+}
+
+function BreakdownSheet() {
+  const s = game.state;
+  const n = s.settings.notation;
+  const bd = breakdown(s);
+  const speed = game.activeSpeed;
+  const f = (v: Parameters<typeof formatNum>[0], d = 2) => formatNum(v, n, d);
+  return (
+    <Sheet title="Multiplier breakdown" onClose={close}>
+      <div>
+        <div class="muted small">Ki per second</div>
+        <div class="mult-total">{f(game.kiPerSec, 2)}</div>
+      </div>
+      <div>
+        <h3>Sources</h3>
+        <div class="mult-line">
+          <div class="kv" style={{ border: 0, padding: 0 }}>
+            <span>Innate Ki</span>
+            <b>{f(bd.innate)}</b>
+          </div>
+        </div>
+        {bd.drills
+          .filter((l) => l.owned > 0)
+          .map((l) => (
+            <div class="mult-line" key={l.id}>
+              <div class="kv" style={{ border: 0, padding: 0 }}>
+                <span>
+                  {l.name} <span class="muted">x{formatNum(l.owned, n)}</span>
+                </span>
+                <b>{f(l.perSec)}</b>
+              </div>
+              <div class="eq">
+                {f(l.baseProd, 2)} each × {formatNum(l.owned, n)} × milestones {f(l.milestoneMult, 0)} ({l.milestones}) × drill upgrades {(1 + l.localBonus).toFixed(2)}
+              </div>
+            </div>
+          ))}
+        <div class="kv">
+          <span class="muted">Subtotal</span>
+          <b>{f(bd.subtotal)}</b>
+        </div>
+      </div>
+      <div>
+        <h3>Multipliers on the whole total</h3>
+        {bd.categories.map((c) => (
+          <div class="kv" key={c.id}>
+            <span>{c.label}</span>
+            <b>x{c.mult.toNumber().toFixed(2)}</b>
+          </div>
+        ))}
+        <div class="kv">
+          <span>Speed Up</span>
+          <b>x{speed}</b>
+        </div>
+        <div class="muted small" style={{ marginTop: 6 }}>
+          Techniques, gear, rivals, forms, ranks and prestige will each add their own line here as they arrive. Bonuses add together inside a category; categories multiply each other.
+        </div>
+      </div>
     </Sheet>
   );
 }

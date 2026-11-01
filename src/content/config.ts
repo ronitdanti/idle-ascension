@@ -10,8 +10,8 @@ export const CONFIG = {
   /** Longest single frame the loop will simulate at normal speed. */
   maxFrameDt: 1,
 
-  /** Placeholder automatic Ki income until Training Grounds arrives in Milestone 2. */
-  baseKiPerSec: 4,
+  /** Innate Ki per second every player has, before upgrades. Keeps the game from ever soft-locking. */
+  baseKiPerSec: 1,
 
   offlineCapSec: 12 * 3600,
 

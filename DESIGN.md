@@ -109,3 +109,10 @@ Mechanical text is dry and exact; story text is where the flavor goes.
 - Focus rings in `--volt`, 2px, offset 2px.
 - Minimum touch target 44 x 44 px. `touch-action: manipulation` on interactive
   elements to kill double-tap zoom.
+
+## Training Grounds (Milestone 2)
+- **Home layout**: scene panel (hero + two chips), a three-way sub-nav (Drills, Upgrades, Overview), then the content. Sub-nav buttons are 44 px tall; the selected one is solid ember with a hard shadow. A green dot on a tab means something is affordable.
+- **Drill row**: a skewed tier badge in the drill's accent, name and count, income line (or flavor text before the first purchase), a slim milestone bar, and a square buy button showing amount and price. A green outline means it is affordable now. Buy buttons repeat while held.
+- **Upgrade card**: same frame, no tier badge: name, one-line effect, buy button with price. Cheapest first.
+- **Hero scene** (canvas): dusk gradient, three parallax ridges, silhouette hero with a crimson headband, flame aura that scales with log Ki/s. Speed Up swaps ember for volt and adds speed lines. Milestones burst sparks. Reduce Motion freezes everything but the static art.
+- **Charged Meditation** uses `--volt` and the bolt icon; Speed Up buttons are a segmented control (x1, x2, x3, x5).

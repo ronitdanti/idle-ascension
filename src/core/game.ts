@@ -1,7 +1,8 @@
 import { CONFIG } from '../content/config';
-import { advance, applyOffline, baseKiPerSec, step, TICK_DT, type GameEvent, type OfflineReport } from './engine';
+import { advance, applyOffline, step, TICK_DT, type GameEvent, type OfflineReport } from './engine';
 import type { GameState } from './state';
 import type { Decimal } from './bignum';
+import { kiPerSec } from './training';
 
 /**
  * Fixed-step driver. No DOM: the browser runtime feeds it real frame deltas,
@@ -28,7 +29,7 @@ export class Game {
 
   /** Ki per real second right now, including Speed Up. */
   get kiPerSec(): Decimal {
-    return baseKiPerSec(this.state).mul(this.activeSpeed);
+    return kiPerSec(this.state).mul(this.activeSpeed);
   }
 
   setSpeed(level: number): void {

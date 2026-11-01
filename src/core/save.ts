@@ -3,7 +3,7 @@ import { CONFIG } from '../content/config';
 import { defaultSettings, newState, type GameState, type Notation, type Settings } from './state';
 
 /** Bump when the save shape changes, and add a migration for the old version. */
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export type SaveErrorCode = 'corrupt' | 'tooNew' | 'checksum';
 
@@ -24,6 +24,8 @@ export interface SaveData {
   totalKi: string;
   fluxSec: number;
   unlocked: Record<string, boolean>;
+  drills: Record<string, number>;
+  upgrades: Record<string, boolean>;
   flags: Record<string, boolean>;
   stats: GameState['stats'];
   settings: Settings;
@@ -40,6 +42,8 @@ export const MIGRATIONS: Migrations = {
     const old = typeof restedSec === 'number' && Number.isFinite(restedSec) ? Math.max(0, restedSec) : 0;
     return { ...rest, fluxSec: Math.min(CONFIG.fluxCapSec, old * CONFIG.fluxPerAwaySec) };
   },
+  // v2 -> v3: Training Grounds. Drills and upgrades start empty.
+  2: (d) => ({ ...d, drills: {}, upgrades: {} }),
 };
 
 export function migrate(raw: any, migrations: Migrations = MIGRATIONS, target = SAVE_VERSION): any {
@@ -84,6 +88,15 @@ function boolMap(x: unknown): Record<string, boolean> {
 }
 
 const NOTATIONS: Notation[] = ['scientific', 'engineering', 'standard'];
+const BUY_AMOUNTS = [1, 10, 100, 'max'];
+
+function countMap(x: unknown): Record<string, number> {
+  const out: Record<string, number> = {};
+  if (x && typeof x === 'object') {
+    for (const [k, v] of Object.entries(x)) if (typeof v === 'number' && Number.isFinite(v) && v >= 1) out[k] = Math.floor(v);
+  }
+  return out;
+}
 
 export function serialize(s: GameState): SaveData {
   return {
@@ -93,6 +106,8 @@ export function serialize(s: GameState): SaveData {
     totalKi: s.totalKi.toString(),
     fluxSec: s.fluxSec,
     unlocked: { ...s.unlocked },
+    drills: { ...s.drills },
+    upgrades: { ...s.upgrades },
     flags: { ...s.flags },
     stats: { ...s.stats },
     settings: { ...s.settings },
@@ -118,6 +133,8 @@ export function parseSave(raw: unknown, migrations: Migrations = MIGRATIONS): Ga
     totalKi,
     fluxSec: num(data.fluxSec, 0, 0),
     unlocked,
+    drills: countMap(data.drills),
+    upgrades: boolMap(data.upgrades),
     flags: boolMap(data.flags),
     stats: {
       playTimeSec: num(stats.playTimeSec, 0, 0),
@@ -130,6 +147,7 @@ export function parseSave(raw: unknown, migrations: Migrations = MIGRATIONS): Ga
       reduceMotion: bool(st.reduceMotion, d.reduceMotion),
       haptics: bool(st.haptics, d.haptics),
       debug: bool(st.debug, d.debug),
+      buyAmount: BUY_AMOUNTS.includes(st.buyAmount) ? st.buyAmount : d.buyAmount,
     },
     lastSeen: num(data.lastSeen, base.lastSeen, 0),
     createdAt: num(data.createdAt, base.createdAt, 0),

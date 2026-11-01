@@ -1,4 +1,5 @@
 import { game } from '../app/runtime';
+import { affordableUpgradeCount } from '../core/training';
 import { ui, useTick, useUi } from '../app/ui-store';
 import type { TabId } from '../content/zones';
 import { formatNum } from '../core/format';
@@ -52,6 +53,7 @@ function TabBar() {
           <button key={id} class={`tab ${locked ? 'locked' : ''}`} aria-current={tab === id ? 'page' : undefined} onClick={() => ui.set({ tab: id })}>
             <Icon />
             {label}
+            {id === 'home' && tab !== 'home' && affordableUpgradeCount(s) > 0 && <i class="dot-ready" style={{ top: 6, right: '26%' }} aria-label="ready" />}
             {locked && (
               <span class="lock">
                 <LockIcon size={14} />

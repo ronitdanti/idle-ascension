@@ -24,8 +24,10 @@ function richState() {
   s.fluxSec = 1234.5;
   s.unlocked = { training: true, dojo: true };
   s.flags = { spoilsCollected: true };
+  s.drills = { shadow: 12, weights: 3 };
+  s.upgrades = { 'shadow-1': true };
   s.stats = { playTimeSec: 4000, offlineSec: 9000, sessions: 7 };
-  s.settings = { notation: 'standard', textScale: 1.2, reduceMotion: true, haptics: false, debug: true };
+  s.settings = { notation: 'standard', textScale: 1.2, reduceMotion: true, haptics: false, debug: true, buyAmount: 10 };
   s.lastSeen = T0 + 5000;
   return s;
 }

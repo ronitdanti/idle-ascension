@@ -3,6 +3,8 @@ import { CONFIG } from '../content/config';
 
 export type Notation = 'scientific' | 'engineering' | 'standard';
 
+export type BuyAmount = 1 | 10 | 100 | 'max';
+
 export interface Settings {
   notation: Notation;
   /** 0.85 to 1.4 */
@@ -10,6 +12,7 @@ export interface Settings {
   reduceMotion: boolean;
   haptics: boolean;
   debug: boolean;
+  buyAmount: BuyAmount;
 }
 
 export interface GameState {
@@ -23,6 +26,10 @@ export interface GameState {
   fluxSec: number;
   /** Unlocked zone ids. Persisted so each unlock is announced exactly once. */
   unlocked: Record<string, boolean>;
+  /** Units owned per drill id. */
+  drills: Record<string, number>;
+  /** Bought upgrade ids. */
+  upgrades: Record<string, boolean>;
   /** Named one-shot flags (e.g. spoilsCollected). */
   flags: Record<string, boolean>;
   stats: { playTimeSec: number; offlineSec: number; sessions: number };
@@ -33,7 +40,7 @@ export interface GameState {
 }
 
 export function defaultSettings(): Settings {
-  return { notation: 'scientific', textScale: 1, reduceMotion: false, haptics: true, debug: false };
+  return { notation: 'scientific', textScale: 1, reduceMotion: false, haptics: true, debug: false, buyAmount: 1 };
 }
 
 export function newState(now: number): GameState {
@@ -43,6 +50,8 @@ export function newState(now: number): GameState {
     totalKi: D(10),
     fluxSec: 0,
     unlocked: { training: true },
+    drills: {},
+    upgrades: {},
     flags: {},
     stats: { playTimeSec: 0, offlineSec: 0, sessions: 1 },
     settings: defaultSettings(),
@@ -61,8 +70,4 @@ export function addKi(s: GameState, amount: Decimal): void {
 
 export function offlineCapSec(_s: GameState): number {
   return CONFIG.offlineCapSec;
-}
-
-export function fluxCapSec(_s: GameState): number {
-  return CONFIG.fluxCapSec;
 }

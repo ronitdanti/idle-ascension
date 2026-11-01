@@ -93,3 +93,34 @@ Notes: Rested x2 is equivalent to offline time and will spiral; drop Focus Burst
 - **Debug time-warp is separate** from Speed Up and costs no Flux.
 
 **Save change:** save version 2. Migration 1 to 2 converts old Rested seconds to Flux at the new charge rate (4000 Rested seconds becomes 1000 Flux), capped at the Flux cap, and drops the old field. Tested in unit tests and against a real v1 save in the browser.
+
+## Milestone 2: Training Grounds
+
+Owner confirmed Milestone 1 ("Confirm, start M2"). No new PLAYTEST.md entries at the time, so nothing to action there.
+
+### Economy
+- **10 drills** from `src/content/drills.ts`: first cost 10, each tier costs about 12x the last, per-unit cost growth rises 1.15 to 1.30. **Production ratio deviates from SPEC's "about 9x":** it runs 9x to 12.5x between early tiers (see BALANCE.md). The simulator showed that a flat 9x made the first 20 minutes too fast relative to the rest of the first hour; weaker early tiers fixed Dojo and Archive timing without slowing the hour mark.
+- **Innate Ki**: every player has 1 Ki/s with no drills. It means the game can never soft-lock (tested), and the first drill (10 Ki, which you start with) is a free first step.
+- **Count milestones** (SPEC section 4): x2 at 10, 25, 50, 100, then doubling (200, 400, ...), with every 4th x3. Per drill, shown on each row as a progress bar to the next one.
+- **Multiplier stack**: additive within a category, multiplicative between categories. Today the categories are the per-drill milestone product, the per-drill additive upgrade bonus, and the global-Ki additive bonus. Later layers (Technique, Gear, Rival, Form, Rank, Prestige) slot in as extra lines of `breakdown()` and appear automatically on the Multiplier breakdown sheet.
+- **44 upgrades** in `src/content/upgrades.ts` (SPEC said about 40): 30 from a three-rung ladder per drill (+100%, +200%, +400% additive to that drill, revealed at 3, 15 and 60 owned, priced as 5x, 200x and 500,000x the drill's first cost), plus 14 hand-written ones (innate Ki, global bonuses, every-drill bonuses, two cross-drill bonuses, two cost reductions capped at 75% total, and two Ki Flux upgrades). Upgrades are revealed gradually, one-time, priced in Ki.
+- **Focus Burst is gone** (owner request), so its drill hooks became Ki Flux hooks: Gravity Chamber milestones add 3% to the Flux charge rate each, Time Dilation Room milestones add 5 minutes of Flux cap each. They are data on the drill (`milestoneEffect`).
+- **Smart Spend** (SPEC section 9) is built now because the simulator needs the same "best value" logic: it repeatedly buys the affordable purchase with the shortest payback (extra Ki/s per cost). Flux upgrades are left for the player to choose since they do not raise Ki/s. Cost reductions are valued as extra income.
+- **Bulk buy**: x1, x10, x100, Max, all via the closed-form geometric series. A numeric amount buys exactly that many or nothing (the button is disabled if you cannot afford it); Max buys as many as affordable. Holding a buy button repeats the purchase.
+- **Auto-Training** stays in Milestone 3 (technique tree), as SPEC section 7 says.
+
+### Save version 3
+Adds `drills` and `upgrades` and the buy-amount setting. Migration 2 to 3 starts them empty, keeping Ki, Flux and unlocks. Junk counts are dropped on load; unknown ids are kept so removing a content item later cannot corrupt a save.
+
+### UI
+- Home is now a hero scene, two stat chips, and three sub-tabs: **Drills**, **Upgrades** (green dot when something is affordable) and **Overview** (Charged Meditation, Multiplier breakdown button, Unlocks in). The tab bar's Home icon also gets a dot while another tab is open.
+- **Hero scene** replaces the Ki orb: dusk sky, three drifting ridges, a silhouette hero with a headband, an aura that grows with Ki/s and turns electric under Speed Up, speed lines while sped up, embers, and a particle burst whenever a purchase crosses a count milestone. Reduce Motion freezes the scenery and stops all particles.
+- Milestone crossings also toast ("Shadow Boxing x2!") and vibrate if haptics are on.
+
+### Simulator (SPEC section 16)
+- Two bots over the pure core: **active** (continuous, picks the purchase with the lowest time-to-afford plus payback, which avoids the stall that pure payback ordering causes) and **casual** (SPEC's schedule: four 5-minute check-ins and one 20-minute session, offline in between, all Ki Flux spent on x3 Speed Up). Active measures first-hour milestones in play-minutes; casual measures day-scale ones in wall-clock time.
+- **Known SPEC conflict:** Wild Frontier unlocks at 2e6 total Ki and Rebirth is available at 1e8 run Ki around 45 minutes, so Frontier must come well before 45 minutes, yet section 14 says 1 to 2 hours. The simulator marks it as a known conflict rather than a failure. Open question for the owner in STATUS.md.
+- **Day-scale milestones cannot be tuned yet.** Tournament and Spirit arrive within a day and Heavenly Court never arrives within 8 weeks with drills alone, because there are no prestige multipliers until Milestones 4 and 8. They are annotated and not counted as failures.
+
+### Tests
+88 unit tests (new: milestones, production stack, bulk buy parity, Max, cost reductions, upgrade reveal, Flux effects, Smart Spend, offline parity with drills, content validation, save v3 and v2 to v3 migration, and a soft-lock check over 200 random states).

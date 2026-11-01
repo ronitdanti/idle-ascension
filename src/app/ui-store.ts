@@ -2,7 +2,8 @@ import { useEffect, useState } from 'preact/hooks';
 import type { OfflineReport } from '../core/engine';
 import type { TabId } from '../content/zones';
 
-export type SheetId = 'menu' | 'settings' | 'stats' | 'debug' | 'reset';
+export type SheetId = 'menu' | 'settings' | 'stats' | 'debug' | 'reset' | 'breakdown';
+export type HomeTab = 'train' | 'upgrades' | 'overview';
 
 export interface Toast {
   id: number;
@@ -13,6 +14,7 @@ export interface Toast {
 
 export interface UiState {
   tab: TabId;
+  homeTab: HomeTab;
   sheet: SheetId | null;
   welcome: OfflineReport | null;
   recovery: 'unreadable' | 'tooNew' | null;
@@ -29,6 +31,7 @@ type Listener = () => void;
 class UiStore {
   state: UiState = {
     tab: 'home',
+    homeTab: 'train',
     sheet: null,
     welcome: null,
     recovery: null,
@@ -60,6 +63,19 @@ class UiStore {
 }
 
 export const ui = new UiStore();
+
+/** One-way event bus for visual effects (milestone bursts). The scene listens, the game logic emits. */
+class Fx {
+  private fns = new Set<() => void>();
+  on(fn: () => void): () => void {
+    this.fns.add(fn);
+    return () => this.fns.delete(fn);
+  }
+  burst(): void {
+    this.fns.forEach((f) => f());
+  }
+}
+export const fx = new Fx();
 
 /** Re-render when UI state changes. */
 export function useUi(): UiState {
