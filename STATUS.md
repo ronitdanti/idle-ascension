@@ -17,6 +17,8 @@ Last updated: 2026-11-01
 
 **Current milestone:** 1 (Foundation), done, waiting for owner feedback. Do not start Milestone 2 until the owner confirms.
 
+**Live URL:** https://ronitdanti.github.io/idle-ascension/ (deploys on every push to `main`; Pages source must be "GitHub Actions").
+
 ## What exists
 - Installable PWA shell, works offline after first load, update banner on new deploys.
 - Fixed 10 Hz engine, offline progress (12 h cap) with Welcome-back sheet, Rested bonus (x2 Ki).
