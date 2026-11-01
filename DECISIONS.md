@@ -124,3 +124,8 @@ Adds `drills` and `upgrades` and the buy-amount setting. Migration 2 to 3 starts
 
 ### Tests
 88 unit tests (new: milestones, production stack, bulk buy parity, Max, cost reductions, upgrade reveal, Flux effects, Smart Spend, offline parity with drills, content validation, save v3 and v2 to v3 migration, and a soft-lock check over 200 random states).
+
+### 2026-11-01 9:20 PM, Milestone 2
+- **"An estimated time to unlock for the zones based on the player's Ki/s."** Every unlock bar (Overview, locked zone tabs) and the More list now shows "Estimated ~13h 57m at your current Ki/s". It divides the remaining lifetime Ki by the current Ki/s, including any active Speed Up. Because income usually grows, it is an upper estimate; the wording says "at your current Ki/s" rather than promising a time. Far-off zones read "over a year" instead of a silly number. Zones with a non-Ki condition (Forge) keep their hint text.
+- **"Smart Spend should have an (i) info button."** Added next to the button. It opens a short sheet: what it buys and in what order, that it buys one unit at a time (ignoring the x1/x10/x100/Max setting), that it never saves up for an expensive item, and that Flux upgrades are left to the player.
+- **Wild Frontier timing.** The owner could not judge it until Dojo mechanics exist and asked that Frontier's unlock be scaled to how long the Dojo keeps them engaged. Decision: leave the threshold at SPEC's 2e6 for now, and revisit it in Milestone 3 once the Dojo and Archive are playable, using the simulator's time-in-Dojo as the input. The simulator already flags it as a known SPEC conflict, so it will not be forgotten. Open in STATUS.md.

@@ -151,6 +151,9 @@ function TrainTab() {
           />
         </div>
         <button class="btn ghost" onClick={spend}>Smart Spend</button>
+        <button class="icon-btn" onClick={() => ui.set({ sheet: 'smartInfo' })} aria-label="What does Smart Spend do?">
+          <span style={{ fontWeight: 900, fontSize: '1.125rem' }}>i</span>
+        </button>
       </div>
       {DRILLS.filter((d) => drillVisible(s, d)).map((d) => (
         <DrillRow key={d.id} d={d} index={DRILLS.indexOf(d)} line={lines.get(d.id)!} />

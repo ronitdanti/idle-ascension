@@ -2,7 +2,7 @@ import { useEffect, useState } from 'preact/hooks';
 import type { OfflineReport } from '../core/engine';
 import type { TabId } from '../content/zones';
 
-export type SheetId = 'menu' | 'settings' | 'stats' | 'debug' | 'reset' | 'breakdown';
+export type SheetId = 'menu' | 'settings' | 'stats' | 'debug' | 'reset' | 'breakdown' | 'smartInfo';
 export type HomeTab = 'train' | 'upgrades' | 'overview';
 
 export interface Toast {

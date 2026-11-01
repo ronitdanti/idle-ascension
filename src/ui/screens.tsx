@@ -1,7 +1,8 @@
 import { game } from '../app/runtime';
 import { ui } from '../app/ui-store';
 import { zoneById, type TabId } from '../content/zones';
-import { formatNum } from '../core/format';
+import { formatEta, formatNum } from '../core/format';
+import { secondsUntilTotalKi } from '../core/training';
 import { Panel } from './components';
 import { Glyph, LockIcon } from './icons';
 import { HeroScene } from './HeroScene';
@@ -83,7 +84,7 @@ export function More() {
                 <span class="glyph"><Glyph glyph={z.glyph} name={z.name} /></span>
                 <span style={{ flex: 1 }}>
                   {z.name}
-                  <small>{open ? 'Unlocked. Coming in an upcoming update.' : rule.kind === 'totalKi' ? `Unlocks at ${formatNum(rule.at, n)} total Ki` : ''}</small>
+                  <small>{open ? 'Unlocked. Coming in an upcoming update.' : rule.kind === 'totalKi' ? `Unlocks at ${formatNum(rule.at, n)} total Ki, estimated ${formatEta(secondsUntilTotalKi(s, rule.at, game.kiPerSec))}` : ''}</small>
                 </span>
                 {!open && <LockIcon size={18} />}
               </div>

@@ -24,6 +24,7 @@ import {
   milestonesReached,
   nextMilestone,
   offers,
+  secondsUntilTotalKi,
   smartSpend,
   upgradeAvailable,
 } from '../src/core/training';
@@ -371,5 +372,20 @@ describe('no soft-lock', () => {
       const wait = cheapest.div(rate).toNumber();
       expect(wait).toBeLessThan(3600 * 24 * 3);
     }
+  });
+});
+
+describe('unlock estimate', () => {
+  it('divides the remaining lifetime Ki by the rate', () => {
+    const s = fresh(0);
+    s.totalKi = D(400);
+    expect(secondsUntilTotalKi(s, 1000, D(10))).toBe(60);
+  });
+
+  it('is zero once reached and infinite with no income', () => {
+    const s = fresh(0);
+    s.totalKi = D(2000);
+    expect(secondsUntilTotalKi(s, 1000, D(10))).toBe(0);
+    expect(secondsUntilTotalKi(fresh(0), 1e9, D(0))).toBe(Infinity);
   });
 });

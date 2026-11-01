@@ -76,3 +76,16 @@ export function formatDuration(totalSec: number): string {
   const days = Math.floor(h / 24);
   return `${days}d ${h % 24}h`;
 }
+
+/** Rough "how long until" text for estimates: ~45s, ~12m, ~3h 20m, ~2d 4h, over a year. */
+export function formatEta(totalSec: number): string {
+  if (!Number.isFinite(totalSec) || totalSec > 365 * 86400) return 'over a year';
+  const s = Math.max(0, Math.ceil(totalSec));
+  if (s < 60) return s <= 5 ? 'a few seconds' : `~${Math.ceil(s / 5) * 5}s`;
+  const m = Math.ceil(s / 60);
+  if (m < 60) return `~${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return m % 60 === 0 ? `~${h}h` : `~${h}h ${m % 60}m`;
+  const d = Math.floor(h / 24);
+  return h % 24 === 0 ? `~${d}d` : `~${d}d ${h % 24}h`;
+}

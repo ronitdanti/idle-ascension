@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDuration, formatNum, standardSuffix } from '../src/core/format';
+import { formatDuration, formatEta, formatNum, standardSuffix } from '../src/core/format';
 
 describe('formatNum', () => {
   it('prints small values plainly', () => {
@@ -59,5 +59,23 @@ describe('formatDuration', () => {
     expect(formatDuration(5 * 3600 + 20 * 60)).toBe('5h 20m');
     expect(formatDuration(2 * 86400 + 4 * 3600)).toBe('2d 4h');
     expect(formatDuration(-5)).toBe('0s');
+  });
+});
+
+describe('formatEta', () => {
+  it('rounds up into friendly estimates', () => {
+    expect(formatEta(2)).toBe('a few seconds');
+    expect(formatEta(33)).toBe('~35s');
+    expect(formatEta(61)).toBe('~2m');
+    expect(formatEta(12 * 60)).toBe('~12m');
+    expect(formatEta(3 * 3600)).toBe('~3h');
+    expect(formatEta(3 * 3600 + 20 * 60)).toBe('~3h 20m');
+    expect(formatEta(2 * 86400 + 4 * 3600)).toBe('~2d 4h');
+  });
+
+  it('handles absurd and invalid values', () => {
+    expect(formatEta(Infinity)).toBe('over a year');
+    expect(formatEta(1e12)).toBe('over a year');
+    expect(formatEta(NaN)).toBe('over a year');
   });
 });

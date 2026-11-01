@@ -60,6 +60,8 @@ export function Sheets() {
       return <Reset />;
     case 'breakdown':
       return <BreakdownSheet />;
+    case 'smartInfo':
+      return <SmartInfo />;
     default:
       return null;
   }
@@ -523,6 +525,28 @@ function BreakdownSheet() {
           Techniques, gear, rivals, forms, ranks and prestige will each add their own line here as they arrive. Bonuses add together inside a category; categories multiply each other.
         </div>
       </div>
+    </Sheet>
+  );
+}
+
+function SmartInfo() {
+  return (
+    <Sheet title="Smart Spend" onClose={close}>
+      <div>
+        Smart Spend spends your Ki for you on whatever pays for itself fastest.
+      </div>
+      <div>
+        <h3>How it works</h3>
+        <div class="kv"><span>1</span><b style={{ textAlign: 'left', flex: 1, marginLeft: 12 }}>It looks at every drill and upgrade you can see and works out how much extra Ki per second each would give for its price.</b></div>
+        <div class="kv"><span>2</span><b style={{ textAlign: 'left', flex: 1, marginLeft: 12 }}>It buys the best one you can afford, then repeats until nothing affordable is left.</b></div>
+      </div>
+      <div>
+        <h3>Good to know</h3>
+        <div class="muted">
+          It buys one unit of a drill at a time, so it ignores your x1/x10/x100/Max setting. It never saves up for an expensive item, so if you are aiming for a specific upgrade, buy it by hand first. Ki Flux upgrades are left for you to choose, since they do not raise Ki per second. Cost reductions are counted as extra income.
+        </div>
+      </div>
+      <button class="btn block" onClick={close}>Got it</button>
     </Sheet>
   );
 }

@@ -1,7 +1,7 @@
 import { CONFIG } from '../content/config';
 import { DRILLS, MILESTONES, drillById, type DrillDef } from '../content/drills';
 import { UPGRADES, upgradeById, type UpgradeDef } from '../content/upgrades';
-import { D, ZERO, type Decimal } from './bignum';
+import { D, ZERO, type Decimal, type DecimalSource } from './bignum';
 import { bulkCost, maxAffordable } from './economy';
 import type { GameState } from './state';
 
@@ -306,4 +306,15 @@ export function smartSpend(s: GameState, maxSteps = 300): number {
     count++;
   }
   return count;
+}
+
+/**
+ * Seconds until lifetime Ki reaches `at`, if income stays at `perSec` (pass the rate to assume).
+ * Income usually grows, so this is an upper estimate. Zero if already reached.
+ */
+export function secondsUntilTotalKi(s: GameState, at: DecimalSource, perSec: Decimal): number {
+  const remaining = D(at).sub(s.totalKi);
+  if (remaining.lte(ZERO)) return 0;
+  if (perSec.lte(ZERO)) return Infinity;
+  return remaining.div(perSec).toNumber();
 }
