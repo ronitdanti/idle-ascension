@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { OfflineReport } from '../core/engine';
+import type { Branch } from '../content/techniques';
 import type { TabId } from '../content/zones';
 
-export type SheetId = 'menu' | 'settings' | 'stats' | 'debug' | 'reset' | 'breakdown' | 'smartInfo';
+export type SheetId = 'menu' | 'settings' | 'stats' | 'debug' | 'reset' | 'breakdown' | 'smartInfo' | 'respec' | 'discovery' | 'autoInfo';
 export type HomeTab = 'train' | 'upgrades' | 'overview';
+export type DojoTab = 'roles' | 'grow';
+/** Archive sub-views: one per Technique branch, plus the scrolls. */
+export type ArchiveTab = Branch | 'scrolls';
 
 export interface Toast {
   id: number;
@@ -15,6 +19,12 @@ export interface Toast {
 export interface UiState {
   tab: TabId;
   homeTab: HomeTab;
+  dojoTab: DojoTab;
+  /** More shows its menu, or the Scroll Archive when open. */
+  moreView: 'menu' | 'archive';
+  archiveTab: ArchiveTab;
+  /** Discovery shown in the lore sheet. */
+  discoveryId: string | null;
   sheet: SheetId | null;
   welcome: OfflineReport | null;
   recovery: 'unreadable' | 'tooNew' | null;
@@ -32,6 +42,10 @@ class UiStore {
   state: UiState = {
     tab: 'home',
     homeTab: 'train',
+    dojoTab: 'roles',
+    moreView: 'menu',
+    archiveTab: 'body',
+    discoveryId: null,
     sheet: null,
     welcome: null,
     recovery: null,

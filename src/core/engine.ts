@@ -1,7 +1,9 @@
 import { ZERO, type Decimal } from './bignum';
 import { CONFIG } from '../content/config';
 import { ZONES, type UnlockRule } from '../content/zones';
-import { addKi, offlineCapSec, type GameState } from './state';
+import { autoStep } from './auto';
+import { insightPerSec, offlineCapSec, renownPerSec } from './dojo';
+import { addInsight, addKi, type GameState } from './state';
 import { fluxCapSec, fluxChargeRate, kiPerSec } from './training';
 
 export const TICK_DT = 1 / CONFIG.tickHz;
@@ -27,7 +29,30 @@ const kiSystem: System = {
   },
 };
 
-export const SYSTEMS: System[] = [kiSystem];
+/** Renown accrues from every assigned disciple. Rates only change on purchases, so any dt is exact. */
+const dojoSystem: System = {
+  id: 'dojo',
+  step(s, dt) {
+    s.renown = s.renown.add(renownPerSec(s).mul(dt));
+  },
+};
+
+const archiveSystem: System = {
+  id: 'archive',
+  step(s, dt) {
+    addInsight(s, insightPerSec(s).mul(dt));
+  },
+};
+
+/** Runs last so it spends the Ki the other systems just produced. */
+const autoSystem: System = {
+  id: 'auto',
+  step(s, dt) {
+    autoStep(s, dt);
+  },
+};
+
+export const SYSTEMS: System[] = [kiSystem, dojoSystem, archiveSystem, autoSystem];
 
 export function unlockMet(s: GameState, rule: UnlockRule): boolean {
   switch (rule.kind) {
@@ -79,6 +104,8 @@ export interface OfflineReport {
   countedSec: number;
   capped: boolean;
   kiGained: Decimal;
+  insightGained: Decimal;
+  renownGained: Decimal;
   fluxGainedSec: number;
   unlocks: string[];
 }
@@ -95,7 +122,9 @@ export function applyOffline(s: GameState, nowMs: number): OfflineReport | null 
   if (awaySec <= 0) return null;
 
   const countedSec = Math.min(awaySec, offlineCapSec(s));
-  const before = s.ki;
+  const before = s.totalKi;
+  const insightBefore = s.insightEarned;
+  const renownBefore = s.renown;
   const unlocks: string[] = [];
   advance(s, countedSec, { offline: true, emit: (e) => e.type === 'unlock' && unlocks.push(e.zone) });
   s.stats.offlineSec += countedSec;
@@ -107,7 +136,10 @@ export function applyOffline(s: GameState, nowMs: number): OfflineReport | null 
     awaySec,
     countedSec,
     capped: awaySec > countedSec,
-    kiGained: s.ki.sub(before).max(ZERO),
+    // Ki produced, not the balance change, so Auto-Training spending does not hide it.
+    kiGained: s.totalKi.sub(before).max(ZERO),
+    insightGained: s.insightEarned.sub(insightBefore).max(ZERO),
+    renownGained: s.renown.sub(renownBefore).max(ZERO),
     fluxGainedSec: s.fluxSec - fluxBefore,
     unlocks,
   };

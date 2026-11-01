@@ -3,14 +3,18 @@ import { applySettings, exportText, failedLoadInfo, freezeAndReload, game, saveN
 import { parseImport } from '../app/storage';
 import { ui, useUi } from '../app/ui-store';
 import { CONFIG } from '../content/config';
+import { DISCOVERIES } from '../content/discoveries';
+import { TECHNIQUES } from '../content/techniques';
 import { ZONES, zoneById } from '../content/zones';
 import { D } from '../core/bignum';
-import { offlineCapSec, newState, type Notation } from '../core/state';
+import { respec, techCount } from '../core/archive';
+import { offlineCapSec } from '../core/dojo';
+import { newState, type Notation } from '../core/state';
 import { formatDuration, formatNum } from '../core/format';
 import { serialize } from '../core/save';
 import { breakdown, fluxCapSec, fluxChargeRate } from '../core/training';
 import { Bar, Kv, Segmented, Sheet, Toggle } from './components';
-import { FluxIcon, Glyph, KiIcon } from './icons';
+import { FluxIcon, Glyph, InsightIcon, KiIcon, RenownIcon } from './icons';
 
 const close = () => ui.set({ sheet: null });
 const open = (sheet: NonNullable<typeof ui.state.sheet>) => ui.set({ sheet });
@@ -62,6 +66,10 @@ export function Sheets() {
       return <BreakdownSheet />;
     case 'smartInfo':
       return <SmartInfo />;
+    case 'respec':
+      return <RespecSheet />;
+    case 'discovery':
+      return <DiscoverySheet />;
     default:
       return null;
   }
@@ -82,10 +90,30 @@ function Welcome() {
       <div>
         {r.capped && (
           <div class="notice" style={{ marginBottom: 10 }}>
-            Offline progress covers up to {formatDuration(CONFIG.offlineCapSec)}. Nothing is lost, production just paused after that. Later upgrades raise this.
+            Offline progress covers up to {formatDuration(offlineCapSec(game.state))}. Nothing is lost, production just paused after that. Breath techniques and Cooks raise this.
           </div>
         )}
         <Kv k="Time counted" v={formatDuration(r.countedSec)} />
+        {r.insightGained.gt(0) && (
+          <Kv
+            k="Insight written"
+            v={
+              <>
+                <InsightIcon size={14} /> +{formatNum(r.insightGained, n, 1)}
+              </>
+            }
+          />
+        )}
+        {r.renownGained.gt(0) && (
+          <Kv
+            k="Renown earned"
+            v={
+              <>
+                <RenownIcon size={14} /> +{formatNum(r.renownGained, n, 1)}
+              </>
+            }
+          />
+        )}
         <Kv
           k="Ki Flux charged"
           v={
@@ -164,6 +192,14 @@ function Stats() {
         <Kv k="Time away (counted)" v={formatDuration(s.stats.offlineSec)} />
         <Kv k="Sessions" v={formatNum(s.stats.sessions, n)} />
         <Kv k="Started" v={new Date(s.createdAt).toLocaleDateString()} />
+      </div>
+      <div>
+        <Kv k="Dojo level" v={s.dojo.level} />
+        <Kv k="Disciples" v={s.dojo.disciples} />
+        <Kv k="Training Level" v={s.dojo.training} />
+        <Kv k="Insight earned" v={formatNum(s.insightEarned, n, 1)} />
+        <Kv k="Techniques learned" v={`${techCount(s)} / ${TECHNIQUES.length}`} />
+        <Kv k="Scrolls read" v={`${Object.keys(s.discoveries).length} / ${DISCOVERIES.length}`} />
       </div>
       <div>
         <h3>Zones</h3>
@@ -373,6 +409,17 @@ function Debug() {
         )}
       </div>
       <div>
+        <h3>Insight and Renown</h3>
+        <div class="row">
+          {['100', '1e4', '1e6'].map((a) => (
+            <button class="btn ghost" key={a} onClick={() => { const v = D(a); s.insight = s.insight.add(v); s.insightEarned = s.insightEarned.add(v); refresh(); }}>+{a} Insight</button>
+          ))}
+          {['100', '1e4', '1e6'].map((a) => (
+            <button class="btn ghost" key={`r${a}`} onClick={() => { s.renown = s.renown.add(D(a)); refresh(); }}>+{a} Renown</button>
+          ))}
+        </div>
+      </div>
+      <div>
         <h3>Ki Flux</h3>
         <div class="row">
           <button class="btn ghost grow" onClick={() => { s.fluxSec = fluxCapSec(s); refresh(); }}>Fill</button>
@@ -500,7 +547,7 @@ function BreakdownSheet() {
                 <b>{f(l.perSec)}</b>
               </div>
               <div class="eq">
-                {f(l.baseProd, 2)} each × {formatNum(l.owned, n)} × milestones {f(l.milestoneMult, 0)} ({l.milestones}) × drill upgrades {(1 + l.localBonus).toFixed(2)}
+                {f(l.baseProd, 2)} each × {formatNum(l.owned, n)} × milestones {f(l.milestoneMult, 0)} ({l.milestones}) × drill upgrades {(1 + l.localBonus).toFixed(2)}{l.techBonus > 0 && <> × techniques {(1 + l.techBonus).toFixed(2)}</>}
               </div>
             </div>
           ))}
@@ -522,7 +569,7 @@ function BreakdownSheet() {
           <b>x{speed}</b>
         </div>
         <div class="muted small" style={{ marginTop: 6 }}>
-          Techniques, gear, rivals, forms, ranks and prestige will each add their own line here as they arrive. Bonuses add together inside a category; categories multiply each other.
+          Gear, rivals, forms, ranks and prestige will each add their own line here as they arrive. Bonuses add together inside a category; categories multiply each other.
         </div>
       </div>
     </Sheet>
@@ -547,6 +594,44 @@ function SmartInfo() {
         </div>
       </div>
       <button class="btn block" onClick={close}>Got it</button>
+    </Sheet>
+  );
+}
+
+function RespecSheet() {
+  const s = game.state;
+  const n = s.settings.notation;
+  return (
+    <Sheet title="Respec techniques" onClose={close}>
+      <div>
+        This releases all {techCount(s)} techniques and gives back <b>{formatNum(s.insightSpent, n, 1)} Insight</b>, every point of it. You can then spend it again however you like.
+      </div>
+      <div class="notice">Respec is always free and never loses anything. Auto-Training stops until you learn Routine Training again.</div>
+      <button
+        class="btn block"
+        onClick={() => {
+          respec(game.state);
+          saveNow();
+          close();
+          ui.toast('Techniques refunded in full', '巻', 'var(--violet)');
+        }}
+      >
+        Refund everything
+      </button>
+      <button class="btn ghost block" onClick={close}>Keep my techniques</button>
+    </Sheet>
+  );
+}
+
+function DiscoverySheet() {
+  const id = ui.state.discoveryId;
+  const d = DISCOVERIES.find((x) => x.id === id);
+  if (!d) return null;
+  return (
+    <Sheet title={d.title} onClose={close}>
+      <div class="lore">{d.text}</div>
+      <div class="notice good">Reward: {d.rewardText}</div>
+      <button class="btn block" onClick={close}>Roll it up</button>
     </Sheet>
   );
 }

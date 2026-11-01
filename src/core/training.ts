@@ -2,8 +2,10 @@ import { CONFIG } from '../content/config';
 import { DRILLS, MILESTONES, drillById, type DrillDef } from '../content/drills';
 import { UPGRADES, upgradeById, type UpgradeDef } from '../content/upgrades';
 import { D, ZERO, type Decimal, type DecimalSource } from './bignum';
+import { cookFluxCapSec, sparringBonus } from './dojo';
 import { bulkCost, maxAffordable } from './economy';
 import type { GameState } from './state';
+import { techEffects, type TechFx } from './techniques';
 
 /* ---------- count milestones ---------- */
 
@@ -104,12 +106,12 @@ function drillMilestoneEffects(s: GameState): { fluxGain: number; fluxCap: numbe
 }
 
 export function fluxCapSec(s: GameState): number {
-  return CONFIG.fluxCapSec + effects(s).fluxCap + drillMilestoneEffects(s).fluxCap;
+  return CONFIG.fluxCapSec + effects(s).fluxCap + drillMilestoneEffects(s).fluxCap + techEffects(s).fluxCap + cookFluxCapSec(s);
 }
 
 /** Flux charged per second away. */
 export function fluxChargeRate(s: GameState): number {
-  return CONFIG.fluxPerAwaySec * (1 + effects(s).fluxGain + drillMilestoneEffects(s).fluxGain);
+  return CONFIG.fluxPerAwaySec * (1 + effects(s).fluxGain + drillMilestoneEffects(s).fluxGain + techEffects(s).fluxGain);
 }
 
 /* ---------- production ---------- */
@@ -123,6 +125,8 @@ export interface DrillLine {
   milestoneMult: Decimal;
   /** Additive drill-local bonus (upgrades, cross effects), as a fraction: 1 = +100%. */
   localBonus: number;
+  /** Additive Technique bonus for this drill, a separate multiplicative category. */
+  techBonus: number;
   perSec: Decimal;
 }
 
@@ -135,10 +139,12 @@ export interface Breakdown {
   total: Decimal;
 }
 
-function drillLine(s: GameState, d: DrillDef, fx: Effects): DrillLine {
+function drillLine(s: GameState, d: DrillDef, fx: Effects, tx: TechFx): DrillLine {
   const n = owned(s, d.id);
   let local = (fx.drillBonus[d.id] ?? 0) + fx.allDrills;
   for (const c of fx.cross) if (c.target === d.id) local += c.perOwned * owned(s, c.source);
+  let tech = (tx.drillBonus[d.id] ?? 0) + tx.allDrills;
+  for (const c of tx.cross) if (c.target === d.id) tech += c.perOwned * owned(s, c.source);
   const mm = milestoneMultiplier(n);
   return {
     id: d.id,
@@ -148,17 +154,30 @@ function drillLine(s: GameState, d: DrillDef, fx: Effects): DrillLine {
     milestones: milestonesReached(n),
     milestoneMult: mm,
     localBonus: local,
-    perSec: n > 0 ? D(d.baseProd).mul(n).mul(mm).mul(1 + local) : ZERO,
+    techBonus: tech,
+    perSec: n > 0 ? D(d.baseProd).mul(n).mul(mm).mul(1 + local).mul(1 + tech) : ZERO,
   };
+}
+
+/**
+ * Multiplier categories applied to the whole sum. Each is multiplicative with the others; bonuses
+ * inside a category add. Later milestones add Gear, Rival, Form, Rank and Prestige here.
+ */
+function categoriesFor(s: GameState, fx: Effects, tx: TechFx): Breakdown['categories'] {
+  const cats: Breakdown['categories'] = [{ id: 'global', label: 'Global Ki upgrades', mult: D(1 + fx.global) }];
+  const dojo = sparringBonus(s);
+  if (dojo > 0) cats.push({ id: 'dojo', label: 'Sparring Partners', mult: D(1 + dojo) });
+  if (tx.global > 0) cats.push({ id: 'technique', label: 'Techniques', mult: D(1 + tx.global) });
+  return cats;
 }
 
 export function breakdown(s: GameState): Breakdown {
   const fx = effects(s);
-  const drills = DRILLS.map((d) => drillLine(s, d, fx));
+  const tx = techEffects(s);
+  const drills = DRILLS.map((d) => drillLine(s, d, fx, tx));
   const innate = D(CONFIG.baseKiPerSec + fx.innate);
   const subtotal = drills.reduce((acc, l) => acc.add(l.perSec), innate);
-  // Later milestones add categories here (Technique, Gear, Rival, Form, Rank, Prestige).
-  const categories = [{ id: 'global', label: 'Global Ki upgrades', mult: D(1 + fx.global) }];
+  const categories = categoriesFor(s, fx, tx);
   const total = categories.reduce((acc, c) => acc.mul(c.mult), subtotal);
   return { drills, innate, categories, subtotal, total };
 }
@@ -166,12 +185,13 @@ export function breakdown(s: GameState): Breakdown {
 /** Ki per second at normal speed. */
 export function kiPerSec(s: GameState): Decimal {
   const fx = effects(s);
+  const tx = techEffects(s);
   let sum = D(CONFIG.baseKiPerSec + fx.innate);
   for (const d of DRILLS) {
     const n = owned(s, d.id);
-    if (n > 0) sum = sum.add(drillLine(s, d, fx).perSec);
+    if (n > 0) sum = sum.add(drillLine(s, d, fx, tx).perSec);
   }
-  return sum.mul(1 + fx.global);
+  return sum.mul(1 + fx.global).mul(1 + sparringBonus(s)).mul(1 + tx.global);
 }
 
 /* ---------- drills: visibility, cost, buying ---------- */
@@ -288,6 +308,22 @@ export function offers(s: GameState): Offer[] {
     consider({ kind: 'upgrade', id: u.id }, D(u.cost), u.effect.kind === 'costReduction' ? u.effect.amount : undefined);
   }
   return out.sort((a, b) => a.payback - b.payback);
+}
+
+/**
+ * The offer with the lowest (time to afford + payback). Unlike Smart Spend this will wait for a
+ * better buy instead of spending on whatever is cheap now. Used by Auto-Training's Best value mode
+ * and by the simulator's bots.
+ */
+export function bestOffer(s: GameState, eligible: (o: Offer) => boolean = () => true): Offer | undefined {
+  const rate = Math.max(kiPerSec(s).toNumber(), 1e-9);
+  let best: { offer: Offer; score: number } | undefined;
+  for (const o of offers(s)) {
+    if (!eligible(o)) continue;
+    const score = Math.max(0, o.cost.sub(s.ki).toNumber()) / rate + o.payback;
+    if (!best || score < best.score) best = { offer: o, score };
+  }
+  return best?.offer;
 }
 
 export function buy(s: GameState, p: Purchase): boolean {

@@ -1,3 +1,5 @@
+import { TECHNIQUES } from '../src/content/techniques';
+import { techCount } from '../src/core/archive';
 import type { GameState } from '../src/core/state';
 
 const MIN = 60;
@@ -37,7 +39,7 @@ export const MILESTONES: Milestone[] = [
     bot: 'active',
     needs: 'M2',
     reached: (s) => !!s.unlocked.frontier,
-    note: 'SPEC conflict: 2e6 total Ki comes before Rebirth at 1e8 run Ki, so it cannot also come after 45 min',
+    note: 'SPEC conflict: SPEC wants 1 to 2 h, but Tournament (1e9) and Spirit (1e12) are Ki thresholds the drill economy passes within the first hour. Set to 5e8, just after the Rebirth threshold; see DECISIONS.md',
   },
   { id: 'forge', label: 'Forge unlocked', target: 2.5 * HOUR, bot: 'active', needs: 'M5', reached: null },
   { id: 'tournament', label: 'Tournament Arc unlocked', target: 1.5 * DAY, bot: 'casual', needs: 'M2', reached: (s) => !!s.unlocked.tournament, note: 'Day-scale pacing depends on Rebirth and Ascension multipliers (Milestones 4 and 8); drills alone cannot be tuned to it', },
@@ -45,4 +47,29 @@ export const MILESTONES: Milestone[] = [
   { id: 'ascension', label: 'First Ascension', target: 5 * DAY, bot: 'casual', needs: 'M8', reached: null },
   { id: 'court', label: 'Heavenly Court unlocked', target: 3.5 * 7 * DAY, bot: 'casual', needs: 'M2', reached: (s) => !!s.unlocked.court, note: 'Day-scale pacing depends on Rebirth and Ascension multipliers (Milestones 4 and 8); drills alone cannot be tuned to it', },
   { id: 'transcend', label: 'First Transcendence', target: 7 * 7 * DAY, bot: 'casual', needs: 'M9', reached: null },
+];
+
+/** Informational events (no SPEC target): used to judge how long the Dojo and Archive keep a player busy. */
+export interface InfoEvent {
+  id: string;
+  label: string;
+  reached: (s: GameState) => boolean;
+}
+
+const tiersOwned = (s: GameState, maxTier: number) => TECHNIQUES.filter((t) => t.tier <= maxTier).every((t) => s.techniques[t.id]);
+
+export const INFO: InfoEvent[] = [
+  { id: 'recruit', label: 'First disciple recruited', reached: (s) => s.dojo.disciples >= 1 },
+  { id: 'dojo2', label: 'Dojo level 2', reached: (s) => s.dojo.level >= 2 },
+  { id: 'tech1', label: 'First technique learned', reached: (s) => techCount(s) >= 1 },
+  { id: 'cook', label: 'Dojo level 3 (Cooks open)', reached: (s) => s.dojo.level >= 3 },
+  { id: 'auto', label: 'Auto-Training unlocked', reached: (s) => !!s.techniques['routine-training'] },
+  { id: 'tech10', label: '10 techniques', reached: (s) => techCount(s) >= 10 },
+  { id: 'dojo5', label: 'Dojo level 5', reached: (s) => s.dojo.level >= 5 },
+  { id: 'tier2', label: 'Every tier 0 to 2 technique', reached: (s) => tiersOwned(s, 2) },
+  { id: 'tech25', label: '25 techniques', reached: (s) => techCount(s) >= 25 },
+  { id: 'dojo8', label: 'Dojo level 8', reached: (s) => s.dojo.level >= 8 },
+  { id: 'tier3', label: 'Every tier 0 to 3 technique', reached: (s) => tiersOwned(s, 3) },
+  { id: 'tier5', label: 'Every tier 0 to 5 technique', reached: (s) => tiersOwned(s, 5) },
+  { id: 'tree', label: 'The whole technique tree', reached: (s) => tiersOwned(s, 99) },
 ];

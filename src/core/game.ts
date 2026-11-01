@@ -2,6 +2,7 @@ import { CONFIG } from '../content/config';
 import { advance, applyOffline, step, TICK_DT, type GameEvent, type OfflineReport } from './engine';
 import type { GameState } from './state';
 import type { Decimal } from './bignum';
+import { speedLevels } from './techniques';
 import { kiPerSec } from './training';
 
 /**
@@ -33,7 +34,7 @@ export class Game {
   }
 
   setSpeed(level: number): void {
-    this.speed = level > 1 && (CONFIG.speedLevels as readonly number[]).includes(level) && this.state.fluxSec > 0 ? level : 1;
+    this.speed = level > 1 && speedLevels(this.state).includes(level) && this.state.fluxSec > 0 ? level : 1;
   }
 
   /**

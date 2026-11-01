@@ -1,5 +1,6 @@
 import { CONFIG } from '../content/config';
 import { zoneById } from '../content/zones';
+import { discoveriesReady } from '../core/archive';
 import { Game } from '../core/game';
 import { newState } from '../core/state';
 import { encodeExport } from '../core/save';
@@ -58,7 +59,13 @@ function handleReturn(now: number): void {
   pumpEvents();
 }
 
+/** Number of unread found scrolls the last time we looked, so each new one toasts exactly once. */
+let scrollsSeen = 0;
+
 function pumpEvents(): void {
+  const ready = discoveriesReady(game.state).length;
+  if (ready > scrollsSeen) ui.toast('A scroll was found in the Archive', '巻', 'var(--violet)');
+  scrollsSeen = ready;
   for (const ev of game.drainEvents()) {
     if (ev.type === 'unlock') {
       const z = zoneById(ev.zone);

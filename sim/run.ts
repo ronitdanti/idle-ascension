@@ -18,8 +18,9 @@ import { advance, applyOffline } from '../src/core/engine';
 import { Game } from '../src/core/game';
 import { formatDuration, formatNum } from '../src/core/format';
 import { newState, type GameState } from '../src/core/state';
-import { buy, kiPerSec, offers } from '../src/core/training';
-import { MILESTONES, type Milestone } from './milestones';
+import { bestOffer, kiPerSec } from '../src/core/training';
+import { spendAll } from './bot';
+import { INFO, MILESTONES, type Milestone } from './milestones';
 
 const DRIFT_LIMIT = 0.25;
 const args = process.argv.slice(2);
@@ -27,32 +28,6 @@ const strict = args.includes('--strict');
 const dayArg = args.indexOf('--days');
 const CASUAL_DAYS = dayArg >= 0 ? Number(args[dayArg + 1]) : 56;
 const ACTIVE_LIMIT = 3 * 3600;
-
-/**
- * The bot's pick: the purchase with the lowest (time to afford it + payback time). Pure payback
- * ordering makes a bot stall saving for something expensive while cheap good buys sit unused.
- */
-function pickBest(s: GameState) {
-  const rate = kiPerSec(s).toNumber();
-  let best: { offer: ReturnType<typeof offers>[number]; score: number } | undefined;
-  for (const o of offers(s)) {
-    const wait = Math.max(0, o.cost.sub(s.ki).toNumber()) / rate;
-    const score = wait + o.payback;
-    if (!best || score < best.score) best = { offer: o, score };
-  }
-  return best?.offer;
-}
-
-/** Buy the pick while it is affordable. Returns purchases made. */
-function spendGreedy(s: GameState): number {
-  let n = 0;
-  for (; n < 5000; n++) {
-    const best = pickBest(s);
-    if (!best || s.ki.lt(best.cost)) break;
-    buy(s, best.purchase);
-  }
-  return n;
-}
 
 type Hits = Map<string, number>;
 
@@ -67,19 +42,21 @@ const pending = (bot: Milestone['bot'], hits: Hits) => MILESTONES.some((m) => m.
 function runActive() {
   const s = newState(0);
   const hits: Hits = new Map();
+  const info: Hits = new Map();
   let t = 0;
   let purchases = 0;
-  while (t < ACTIVE_LIMIT && pending('active', hits)) {
-    purchases += spendGreedy(s);
-    const best = pickBest(s);
+  while (t < ACTIVE_LIMIT && (pending('active', hits) || INFO.some((m) => !info.has(m.id)))) {
+    purchases += spendAll(s);
+    const best = bestOffer(s);
     const rate = kiPerSec(s).toNumber();
     const need = best ? best.cost.sub(s.ki).toNumber() / rate : 60;
     const wait = Math.min(60, Math.max(1, need));
     advance(s, wait, { offline: false }, wait);
     t += wait;
     record(s, hits, t, 'active');
+    for (const m of INFO) if (!info.has(m.id) && m.reached(s)) info.set(m.id, t);
   }
-  return { s, hits, t, purchases };
+  return { s, hits, t, purchases, info };
 }
 
 /** Visit windows in a day: [start hour, minutes]. */
@@ -96,6 +73,7 @@ function runCasual(days: number) {
   const s = newState(0);
   const g = new Game(s);
   const hits: Hits = new Map();
+  const info: Hits = new Map();
   let purchases = 0;
   let fluxSpent = 0;
   let fluxCharged = 0;
@@ -107,8 +85,9 @@ function runCasual(days: number) {
       applyOffline(s, start); // time since the last visit runs offline and charges Flux
       fluxCharged += s.fluxSec - fluxBefore;
       record(s, hits, start / 1000, 'casual');
+      for (const m of INFO) if (!info.has(m.id) && m.reached(s)) info.set(m.id, start / 1000);
       for (let sec = 0; sec < minutes * 60; sec += TICK) {
-        purchases += spendGreedy(s);
+        purchases += spendAll(s);
         g.setSpeed(s.fluxSec > 0 ? SPEED : 1);
         const before = s.fluxSec;
         advance(s, g.spendFlux(TICK), { offline: false }, TICK);
@@ -116,10 +95,11 @@ function runCasual(days: number) {
         record(s, hits, start / 1000 + sec + TICK, 'casual');
       }
       s.lastSeen = start + minutes * 60_000;
-      if (!pending('casual', hits)) break outer;
+      for (const m of INFO) if (!info.has(m.id) && m.reached(s)) info.set(m.id, start / 1000 + minutes * 60);
+      if (!pending('casual', hits) && INFO.every((m) => info.has(m.id))) break outer;
     }
   }
-  return { s, hits, purchases, fluxSpent, fluxCharged };
+  return { s, hits, purchases, fluxSpent, fluxCharged, info };
 }
 
 function table(title: string, bot: Milestone['bot'], hits: Hits, horizon: number) {
@@ -147,17 +127,29 @@ function table(title: string, bot: Milestone['bot'], hits: Hits, horizon: number
   return bad;
 }
 
+function infoTable(title: string, hits: Hits, horizon: number) {
+  console.log(`\n${title}`);
+  console.log('Event'.padEnd(34) + 'At');
+  for (const m of INFO) {
+    const at = hits.get(m.id);
+    console.log(m.label.padEnd(34) + (at === undefined ? `not within ${formatDuration(horizon)}` : formatDuration(at)));
+  }
+}
+
 const t0 = Date.now();
 const active = runActive();
 console.log(`\nKi Ascension balance sim`);
 console.log(`Active bot: ${formatDuration(active.t)} of play, ${active.purchases} purchases, ${formatNum(active.s.totalKi)} lifetime Ki, ${formatNum(kiPerSec(active.s))} Ki/s`);
 let failures = table('Active player (continuous play, minutes)', 'active', active.hits, active.t);
+infoTable('Dojo and Archive engagement (active bot, play time, informational: no target)', active.info, active.t);
 
 const casual = runCasual(CASUAL_DAYS);
 console.log(
   `\nCasual bot: ${CASUAL_DAYS} days max, ${casual.purchases} purchases, ${formatNum(casual.s.totalKi)} lifetime Ki, Flux charged ${formatDuration(casual.fluxCharged)} and spent ${formatDuration(casual.fluxSpent)}`,
 );
 failures += table('Casual player (SPEC schedule, wall clock)', 'casual', casual.hits, CASUAL_DAYS * 86400);
+infoTable('Dojo and Archive engagement (casual bot, wall clock)', casual.info, CASUAL_DAYS * 86400);
+console.log(`Casual bot at the end: Dojo level ${casual.s.dojo.level}, ${casual.s.dojo.disciples} disciples, Training ${casual.s.dojo.training}, ${formatNum(casual.s.insightEarned)} Insight earned`);
 
 console.log(`\nDone in ${((Date.now() - t0) / 1000).toFixed(1)}s. Drifts marked with a SPEC note are known conflicts, not tuning failures.\n`);
 if (strict && failures > 0) process.exit(1);

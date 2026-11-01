@@ -876,3 +876,178 @@ input[type='text'] {
   color: var(--mute);
   font-size: 0.75rem;
 }
+
+/* ---------- Dojo and Archive (Milestone 3) ---------- */
+.subnav.two {
+  grid-template-columns: repeat(2, 1fr);
+}
+.dojo-head {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.dojo-stat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.dojo-stat .k {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+.dojo-stat .v {
+  font-size: 1.25rem;
+  font-weight: 900;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.btn.recruit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  line-height: 1.15;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.btn.recruit small {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.role,
+.tech,
+.scroll {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: var(--ink-1);
+  border: 2px solid var(--line);
+  border-left: 5px solid var(--accent, var(--line));
+}
+.role.locked,
+.tech.locked,
+.scroll.locked {
+  opacity: 0.55;
+}
+.role-glyph,
+.scroll-glyph {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--accent, var(--paper));
+  background: var(--ink-0);
+  border: 2px solid var(--line);
+}
+.role-main,
+.tech-main,
+.scroll-main {
+  flex: 1;
+  min-width: 0;
+}
+.role-top,
+.tech-top {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.stepper {
+  flex: none;
+  display: flex;
+  gap: 6px;
+}
+.stepper .btn {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 10px;
+  font-size: 1.125rem;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.stepper .btn.all {
+  font-size: 0.75rem;
+  padding: 0 8px;
+}
+
+.tech.can {
+  border-color: var(--jade);
+  border-left-color: var(--accent);
+}
+.tech.owned {
+  background: var(--ink-2);
+}
+.tech-effect {
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.tech-flavor {
+  font-style: italic;
+}
+.chip-tier {
+  margin-left: auto;
+  padding: 0 6px;
+  font-size: 0.625rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--mute);
+  border: 1px solid var(--line);
+}
+.tech-side {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+.learned {
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--jade);
+}
+.learned::before {
+  content: '✓ ';
+}
+.btn.small-btn {
+  min-height: 44px;
+  padding: 4px 10px;
+  font-size: 0.6875rem;
+}
+
+.scroll.new {
+  border-color: var(--violet);
+  background: var(--ink-2);
+}
+.scroll.read .scroll-glyph {
+  color: var(--mute);
+}
+.scroll.locked .scroll-glyph {
+  color: var(--ink-2);
+  -webkit-text-stroke: 1px var(--line);
+}
+.lore {
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  font-style: italic;
+  border-left: 4px solid var(--violet);
+  padding-left: 12px;
+}
+.btn.back {
+  align-self: flex-start;
+  min-height: 44px;
+}

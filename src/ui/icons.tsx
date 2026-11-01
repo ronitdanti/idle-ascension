@@ -34,6 +34,30 @@ export const FluxIcon = (p: P) => (
   </Svg>
 );
 
+/** Insight: a rolled scroll with a diamond seal. */
+export const InsightIcon = (p: P) => (
+  <Svg color="var(--violet)" {...p}>
+    <path d="M5 3 L19 3 L19 17 L12 22 L5 17 Z" />
+    <path d="M12 7 L15 11 L12 15 L9 11 Z" fill="var(--ink-0)" stroke="var(--ink-0)" />
+  </Svg>
+);
+
+/** Renown: a pennant on a pole. */
+export const RenownIcon = (p: P) => (
+  <Svg color="var(--gold)" {...p}>
+    <path d="M5 2 L7 2 L7 22 L5 22 Z" />
+    <path d="M7 4 L20 4 L16 9 L20 14 L7 14 Z" />
+  </Svg>
+);
+
+/** Disciples: a spiky head. */
+export const DiscipleIcon = (p: P) => (
+  <Svg color="var(--gold)" {...p}>
+    <path d="M4 10 L6 3 L9 7 L12 2 L15 7 L18 3 L20 10 L20 14 L17 21 L7 21 L4 14 Z" />
+    <path d="M8 12 L11 12 L11 14 L8 14 Z M13 12 L16 12 L16 14 L13 14 Z" fill="var(--ink-0)" stroke="var(--ink-0)" />
+  </Svg>
+);
+
 export const HomeIcon = (p: P) => (
   <Svg {...p}>
     <path d="M2 11 L12 3 L22 11 L19 11 L19 21 L5 21 L5 11 Z" fill="none" />

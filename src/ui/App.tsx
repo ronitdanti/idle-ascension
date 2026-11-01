@@ -1,4 +1,6 @@
 import { game } from '../app/runtime';
+import { buyableTechCount, discoveriesReady } from '../core/archive';
+import { dojoReady } from '../core/dojo';
 import { affordableUpgradeCount } from '../core/training';
 import { ui, useTick, useUi } from '../app/ui-store';
 import type { TabId } from '../content/zones';
@@ -42,6 +44,20 @@ function Header() {
   );
 }
 
+/** A small dot on a tab when something there is worth a look. */
+function ready(id: TabId, s: typeof game.state): boolean {
+  switch (id) {
+    case 'home':
+      return affordableUpgradeCount(s) > 0;
+    case 'dojo':
+      return dojoReady(s);
+    case 'more':
+      return !!s.unlocked.archive && (discoveriesReady(s).length > 0 || buyableTechCount(s) > 0);
+    default:
+      return false;
+  }
+}
+
 function TabBar() {
   const { tab } = useUi();
   const s = game.state;
@@ -53,7 +69,7 @@ function TabBar() {
           <button key={id} class={`tab ${locked ? 'locked' : ''}`} aria-current={tab === id ? 'page' : undefined} onClick={() => ui.set({ tab: id })}>
             <Icon />
             {label}
-            {id === 'home' && tab !== 'home' && affordableUpgradeCount(s) > 0 && <i class="dot-ready" style={{ top: 6, right: '26%' }} aria-label="ready" />}
+            {tab !== id && ready(id, s) && <i class="dot-ready" style={{ top: 6, right: '26%' }} aria-label="ready" />}
             {locked && (
               <span class="lock">
                 <LockIcon size={14} />

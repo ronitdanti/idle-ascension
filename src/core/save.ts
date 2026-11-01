@@ -1,9 +1,9 @@
 import { D, ZERO, type Decimal } from './bignum';
 import { CONFIG } from '../content/config';
-import { defaultSettings, newState, type GameState, type Notation, type Settings } from './state';
+import { defaultAuto, defaultDojo, defaultSettings, newState, type AutoMode, type DojoState, type GameState, type Notation, type Settings, type AutoState } from './state';
 
 /** Bump when the save shape changes, and add a migration for the old version. */
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 export type SaveErrorCode = 'corrupt' | 'tooNew' | 'checksum';
 
@@ -23,6 +23,14 @@ export interface SaveData {
   runKi: string;
   totalKi: string;
   fluxSec: number;
+  insight: string;
+  insightEarned: string;
+  insightSpent: string;
+  renown: string;
+  dojo: DojoState;
+  techniques: Record<string, boolean>;
+  discoveries: Record<string, boolean>;
+  auto: AutoState;
   unlocked: Record<string, boolean>;
   drills: Record<string, number>;
   upgrades: Record<string, boolean>;
@@ -44,6 +52,18 @@ export const MIGRATIONS: Migrations = {
   },
   // v2 -> v3: Training Grounds. Drills and upgrades start empty.
   2: (d) => ({ ...d, drills: {}, upgrades: {} }),
+  // v3 -> v4: Dojo and Archive. Everything starts empty; Ki, drills and unlocks are kept.
+  3: (d) => ({
+    ...d,
+    insight: '0',
+    insightEarned: '0',
+    insightSpent: '0',
+    renown: '0',
+    dojo: defaultDojo(),
+    techniques: {},
+    discoveries: {},
+    auto: defaultAuto(),
+  }),
 };
 
 export function migrate(raw: any, migrations: Migrations = MIGRATIONS, target = SAVE_VERSION): any {
@@ -74,7 +94,12 @@ function bool(x: unknown, def: boolean): boolean {
 
 function dec(x: unknown, def: Decimal): Decimal {
   if (typeof x !== 'string' && typeof x !== 'number') return def;
-  const d = D(x);
+  let d: Decimal;
+  try {
+    d = D(x);
+  } catch {
+    return def; // junk text: fall back instead of making the whole save unreadable
+  }
   if (Number.isNaN(d.m) || Number.isNaN(d.e) || !Number.isFinite(d.e)) return def;
   return d.lt(ZERO) ? ZERO : d;
 }
@@ -89,6 +114,31 @@ function boolMap(x: unknown): Record<string, boolean> {
 
 const NOTATIONS: Notation[] = ['scientific', 'engineering', 'standard'];
 const BUY_AMOUNTS = [1, 10, 100, 'max'];
+const AUTO_MODES: AutoMode[] = ['cheapest', 'value', 'deepest', 'even'];
+
+/** Roles can never hold more disciples than exist: trim from the end if a save disagrees with itself. */
+function parseDojo(x: any): DojoState {
+  const def = defaultDojo();
+  const disciples = Math.floor(num(x?.disciples, 0, 0));
+  const roles: Record<string, number> = {};
+  let left = disciples;
+  for (const [k, v] of Object.entries(countMap(x?.roles))) {
+    const n = Math.min(v, left);
+    if (n > 0) roles[k] = n;
+    left -= n;
+  }
+  return { disciples, level: Math.max(1, Math.floor(num(x?.level, def.level, 1))), training: Math.floor(num(x?.training, def.training, 0)), roles };
+}
+
+function parseAuto(x: any): AutoState {
+  const def = defaultAuto();
+  return {
+    on: bool(x?.on, def.on),
+    mode: AUTO_MODES.includes(x?.mode) ? x.mode : def.mode,
+    upgrades: bool(x?.upgrades, def.upgrades),
+    acc: num(x?.acc, 0, 0),
+  };
+}
 
 function countMap(x: unknown): Record<string, number> {
   const out: Record<string, number> = {};
@@ -105,6 +155,14 @@ export function serialize(s: GameState): SaveData {
     runKi: s.runKi.toString(),
     totalKi: s.totalKi.toString(),
     fluxSec: s.fluxSec,
+    insight: s.insight.toString(),
+    insightEarned: s.insightEarned.toString(),
+    insightSpent: s.insightSpent.toString(),
+    renown: s.renown.toString(),
+    dojo: { ...s.dojo, roles: { ...s.dojo.roles } },
+    techniques: { ...s.techniques },
+    discoveries: { ...s.discoveries },
+    auto: { ...s.auto },
     unlocked: { ...s.unlocked },
     drills: { ...s.drills },
     upgrades: { ...s.upgrades },
@@ -132,6 +190,14 @@ export function parseSave(raw: unknown, migrations: Migrations = MIGRATIONS): Ga
     runKi: dec(data.runKi, totalKi).max(ki),
     totalKi,
     fluxSec: num(data.fluxSec, 0, 0),
+    insight: dec(data.insight, ZERO),
+    insightEarned: dec(data.insightEarned, ZERO),
+    insightSpent: dec(data.insightSpent, ZERO),
+    renown: dec(data.renown, ZERO),
+    dojo: parseDojo(data.dojo),
+    techniques: boolMap(data.techniques),
+    discoveries: boolMap(data.discoveries),
+    auto: parseAuto(data.auto),
     unlocked,
     drills: countMap(data.drills),
     upgrades: boolMap(data.upgrades),

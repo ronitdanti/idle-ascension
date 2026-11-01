@@ -14,6 +14,16 @@ export const CONFIG = {
   baseKiPerSec: 1,
 
   offlineCapSec: 12 * 3600,
+  /** Offline cap can never be raised past this (SPEC section 9: up to 7 days). */
+  offlineCapMaxSec: 7 * 86400,
+
+  /** Auto-Training: seconds between passes, and the modes available, by technique level. */
+  auto: {
+    intervalSec: { 1: 10, 2: 5, 3: 2 },
+    modes: { 1: ['cheapest'], 2: ['cheapest', 'value'], 3: ['cheapest', 'value', 'deepest', 'even'] },
+  },
+  /** Recruit discounts from techniques can never exceed this. */
+  maxRecruitDiscount: 0.5,
 
   /**
    * Charged Meditation. Each second away charges `fluxPerAwaySec` Ki Flux (a bank of bonus

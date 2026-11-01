@@ -1,9 +1,12 @@
 import { game } from '../app/runtime';
-import { ui } from '../app/ui-store';
+import { ui, useUi } from '../app/ui-store';
 import { zoneById, type TabId } from '../content/zones';
 import { formatEta, formatNum } from '../core/format';
 import { secondsUntilTotalKi } from '../core/training';
+import { buyableTechCount, discoveriesReady } from '../core/archive';
+import { ArchiveScreen } from './archive';
 import { Panel } from './components';
+import { DojoScreen } from './dojo';
 import { Glyph, LockIcon } from './icons';
 import { HeroScene } from './HeroScene';
 import { TrainingGrounds } from './train';
@@ -43,6 +46,7 @@ export function Home() {
 export function ZoneScreen({ tab }: { tab: Exclude<TabId, 'home' | 'more'> }) {
   const zone = zoneById(tab);
   const open = !!game.state.unlocked[zone.id];
+  if (tab === 'dojo' && open) return <DojoScreen />;
   return (
     <div class="screen" style={{ '--accent': zone.accent }}>
       <Panel accent={zone.accent} watermark={zone.glyph}>
@@ -69,8 +73,10 @@ export function ZoneScreen({ tab }: { tab: Exclude<TabId, 'home' | 'more'> }) {
 const MORE_ZONES = ['archive', 'tournament', 'spirit', 'court'];
 
 export function More() {
+  const { moreView } = useUi();
   const s = game.state;
   const n = s.settings.notation;
+  if (moreView === 'archive' && s.unlocked.archive) return <ArchiveScreen />;
   return (
     <div class="screen">
       <Panel title="Zones" accent="var(--violet)">
@@ -79,14 +85,36 @@ export function More() {
             const z = zoneById(id);
             const open = !!s.unlocked[id];
             const rule = z.unlock;
-            return (
-              <div class={`list-row ${open ? '' : 'locked'}`} key={id} style={{ '--accent': z.accent }}>
+            const built = id === 'archive';
+            const badge = built && (buyableTechCount(s) > 0 || discoveriesReady(s).length > 0);
+            const body = (
+              <>
                 <span class="glyph"><Glyph glyph={z.glyph} name={z.name} /></span>
                 <span style={{ flex: 1 }}>
                   {z.name}
-                  <small>{open ? 'Unlocked. Coming in an upcoming update.' : rule.kind === 'totalKi' ? `Unlocks at ${formatNum(rule.at, n)} total Ki, estimated ${formatEta(secondsUntilTotalKi(s, rule.at, game.kiPerSec))}` : ''}</small>
+                  <small>
+                    {built && open
+                      ? discoveriesReady(s).length > 0
+                        ? 'A new scroll is waiting'
+                        : 'Technique Tree, scrolls and respec'
+                      : open
+                        ? 'Unlocked. Coming in an upcoming update.'
+                        : rule.kind === 'totalKi'
+                          ? `Unlocks at ${formatNum(rule.at, n)} total Ki, estimated ${formatEta(secondsUntilTotalKi(s, rule.at, game.kiPerSec))}`
+                          : ''}
+                  </small>
                 </span>
                 {!open && <LockIcon size={18} />}
+                {badge && <i class="dot-ready" style={{ position: 'static' }} aria-label="something to do" />}
+              </>
+            );
+            return built && open ? (
+              <button class="list-row" key={id} style={{ '--accent': z.accent }} onClick={() => ui.set({ moreView: 'archive' })}>
+                {body}
+              </button>
+            ) : (
+              <div class={`list-row ${open ? '' : 'locked'}`} key={id} style={{ '--accent': z.accent }}>
+                {body}
               </div>
             );
           })}

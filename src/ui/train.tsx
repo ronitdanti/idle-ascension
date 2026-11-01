@@ -1,13 +1,14 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { buzz, game, saveNow } from '../app/runtime';
 import { fx, ui, useUi } from '../app/ui-store';
-import { CONFIG } from '../content/config';
 import { DRILLS, type DrillDef } from '../content/drills';
 import { UPGRADES, type UpgradeDef } from '../content/upgrades';
 import { ZONES, zoneById } from '../content/zones';
 import { D } from '../core/bignum';
 import { formatDuration, formatNum } from '../core/format';
-import type { BuyAmount } from '../core/state';
+import { autoCanUpgrade, autoIntervalSec, autoLevel, autoModes, effectiveMode } from '../core/auto';
+import type { AutoMode, BuyAmount } from '../core/state';
+import { speedLevels } from '../core/techniques';
 import {
   affordableUpgradeCount,
   breakdown,
@@ -26,12 +27,12 @@ import {
   upgradeAvailable,
   type DrillLine,
 } from '../core/training';
-import { Bar, Panel, Segmented } from './components';
+import { Bar, Panel, Segmented, Toggle } from './components';
 import { Glyph } from './icons';
 import { UnlockProgress } from './unlock';
 
 /** Press once to act, hold to repeat. Keyboard activation still works through click. */
-function useHold(action: () => void) {
+export function useHold(action: () => void) {
   const fn = useRef(action);
   fn.current = action;
   const timers = useRef<{ t?: number; i?: number }>({});
@@ -212,6 +213,67 @@ function UpgradesTab() {
   );
 }
 
+const MODE_LABELS: Record<AutoMode, string> = { cheapest: 'Cheapest', value: 'Best value', deepest: 'Top tier', even: 'Even' };
+const MODE_HELP: Record<AutoMode, string> = {
+  cheapest: 'Buys the cheapest drill again and again.',
+  value: 'Buys whatever pays for itself fastest, and saves up for it when it is worth waiting.',
+  deepest: 'Buys as many of your highest-tier drill as it can, then the next one down.',
+  even: 'Buys the affordable drill you own the fewest of, so every tier keeps growing.',
+};
+
+function AutoPanel() {
+  const s = game.state;
+  const level = autoLevel(s);
+  if (level === 0) {
+    if (!s.unlocked.archive) return null;
+    return (
+      <div class="notice">
+        <b>Auto-Training.</b> Learn Routine Training in the Mind branch of the Scroll Archive to have drills bought for you.
+      </div>
+    );
+  }
+  const modes = autoModes(s);
+  const mode = effectiveMode(s) ?? 'cheapest';
+  const set = () => {
+    saveNow();
+  };
+  return (
+    <Panel title="Auto-Training" accent="var(--gold)">
+      <div class="stack">
+        <Toggle
+          label={s.auto.on ? 'On' : 'Off'}
+          on={s.auto.on}
+          onChange={(v) => {
+            s.auto.on = v;
+            s.auto.acc = 0;
+            set();
+          }}
+        />
+        <div class="muted small">Every {autoIntervalSec(level)} seconds it spends your Ki in the order you pick. Switch it off any time to save Ki for something specific.</div>
+        <Segmented
+          value={mode}
+          options={modes.map((m) => ({ id: m, label: MODE_LABELS[m] }))}
+          onChange={(m) => {
+            s.auto.mode = m;
+            set();
+          }}
+        />
+        <div class="muted small">{MODE_HELP[mode]}</div>
+        {autoCanUpgrade(s) && (
+          <Toggle
+            label="Also buy upgrades"
+            on={s.auto.upgrades}
+            onChange={(v) => {
+              s.auto.upgrades = v;
+              set();
+            }}
+          />
+        )}
+      </div>
+    </Panel>
+  );
+}
+
 function OverviewTab() {
   const s = game.state;
   const cap = fluxCapSec(s);
@@ -232,7 +294,7 @@ function OverviewTab() {
           <Bar value={s.fluxSec / cap} accent="var(--volt)" label={`Ki Flux ${formatDuration(s.fluxSec)} / ${formatDuration(cap)}`} />
           <div class="seg" role="group" aria-label="Speed Up">
             <button aria-pressed={active === 1} onClick={() => pick(1)}>x1</button>
-            {CONFIG.speedLevels.map((l) => (
+            {speedLevels(s).map((l) => (
               <button key={l} aria-pressed={active === l} disabled={s.fluxSec <= 0} onClick={() => pick(l)}>
                 x{l}
               </button>
@@ -247,6 +309,8 @@ function OverviewTab() {
           </div>
         </div>
       </Panel>
+
+      <AutoPanel />
 
       <button class="btn ghost block" onClick={() => ui.set({ sheet: 'breakdown' })}>
         Multiplier breakdown
