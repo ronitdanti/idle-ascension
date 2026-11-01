@@ -1,0 +1,28 @@
+{
+  "name": "idle-ascension",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "predev": "node scripts/make-icons.mjs",
+    "dev": "vite",
+    "build": "node scripts/make-icons.mjs && tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "sim": "tsx sim/run.ts",
+    "check": "npm run test && npm run sim"
+  },
+  "dependencies": {
+    "break_infinity.js": "^2.2.0",
+    "preact": "^11.1.1"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.6",
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vite-plugin-pwa": "^2.0.0",
+    "vitest": "^5.0.5"
+  }
+}
