@@ -2,6 +2,9 @@
 
 Tuning changes and simulator results, newest first. Targets are SPEC section 14.
 
+## 2026-11-01, after first playtest
+Placeholder income 1 to 4 Ki/s (tap removed per PLAYTEST.md). Dojo now at about 4 minutes (sim reports 5m at its 5-minute check-in granularity, target 5m). Archive 3h 30m and Frontier 5d 18h are still far off target; that is the placeholder economy, tuned in Milestone 2.
+
 ## Milestone 1: Foundation (2026-11-01)
 
 No real economy yet, so nothing is tuned. The only Ki sources are a placeholder 1 Ki/s

@@ -25,7 +25,7 @@ export interface GameState {
   unlocked: Record<string, boolean>;
   /** Named one-shot flags (e.g. spoilsCollected). */
   flags: Record<string, boolean>;
-  stats: { taps: number; playTimeSec: number; offlineSec: number; sessions: number };
+  stats: { playTimeSec: number; offlineSec: number; sessions: number };
   settings: Settings;
   /** Epoch ms the game was last saved or backgrounded. Used to measure absence. */
   lastSeen: number;
@@ -44,7 +44,7 @@ export function newState(now: number): GameState {
     restedSec: 0,
     unlocked: { training: true },
     flags: {},
-    stats: { taps: 0, playTimeSec: 0, offlineSec: 0, sessions: 1 },
+    stats: { playTimeSec: 0, offlineSec: 0, sessions: 1 },
     settings: defaultSettings(),
     lastSeen: now,
     createdAt: now,

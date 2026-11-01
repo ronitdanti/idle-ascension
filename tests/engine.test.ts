@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { D } from '../src/core/bignum';
 import { CONFIG } from '../src/content/config';
-import { advance, applyOffline, gather, step, TICK_DT } from '../src/core/engine';
+import { advance, applyOffline, step, TICK_DT } from '../src/core/engine';
 import { Game } from '../src/core/game';
 import { newState, type GameState } from '../src/core/state';
 
@@ -126,7 +126,7 @@ describe('offline progress', () => {
   });
 });
 
-describe('unlocks and gather', () => {
+describe('unlocks', () => {
   it('unlocks once, from lifetime Ki, and emits one event', () => {
     const g = new Game(fresh());
     g.state.totalKi = D(999.95);
@@ -145,14 +145,5 @@ describe('unlocks and gather', () => {
     g.state.ki = D(0);
     g.update(0.2);
     expect(g.state.unlocked.archive).toBe(true);
-  });
-
-  it('gather adds to Ki, run Ki and lifetime Ki together', () => {
-    const s = fresh();
-    gather(s);
-    expect(s.ki.toNumber()).toBe(11);
-    expect(s.runKi.toNumber()).toBe(11);
-    expect(s.totalKi.toNumber()).toBe(11);
-    expect(s.stats.taps).toBe(1);
   });
 });

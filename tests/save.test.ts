@@ -23,7 +23,7 @@ function richState() {
   s.restedSec = 1234.5;
   s.unlocked = { training: true, dojo: true };
   s.flags = { spoilsCollected: true };
-  s.stats = { taps: 99, playTimeSec: 4000, offlineSec: 9000, sessions: 7 };
+  s.stats = { playTimeSec: 4000, offlineSec: 9000, sessions: 7 };
   s.settings = { notation: 'standard', textScale: 1.2, reduceMotion: true, haptics: false, debug: true };
   s.lastSeen = T0 + 5000;
   return s;

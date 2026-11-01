@@ -129,11 +129,3 @@ export function applyOffline(s: GameState, nowMs: number): OfflineReport | null 
     unlocks,
   };
 }
-
-/** Manual gather (tap). */
-export function gather(s: GameState): Decimal {
-  const amount = D(CONFIG.tapKi);
-  addKi(s, amount);
-  s.stats.taps += 1;
-  return amount;
-}

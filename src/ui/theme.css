@@ -284,8 +284,7 @@ button {
   width: 100%;
   height: 100%;
   display: block;
-  touch-action: manipulation;
-  cursor: pointer;
+  pointer-events: none;
 }
 .orb-hint {
   position: absolute;

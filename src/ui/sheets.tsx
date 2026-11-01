@@ -150,7 +150,6 @@ function Stats() {
       <div>
         <Kv k="Time played" v={formatDuration(s.stats.playTimeSec)} />
         <Kv k="Time away (counted)" v={formatDuration(s.stats.offlineSec)} />
-        <Kv k="Gathers" v={formatNum(s.stats.taps, n)} />
         <Kv k="Sessions" v={formatNum(s.stats.sessions, n)} />
         <Kv k="Started" v={new Date(s.createdAt).toLocaleDateString()} />
       </div>

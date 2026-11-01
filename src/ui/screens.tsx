@@ -69,6 +69,7 @@ export function Home() {
               <span class="glyph"><Glyph glyph={z.glyph} name={z.name} /></span>
               <span>{z.name}</span>
             </div>
+            <div class="muted small">{z.blurb}</div>
             <UnlockProgress zone={z} />
           </div>
         ))}

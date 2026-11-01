@@ -59,3 +59,10 @@ SPEC forbids asset files, so `scripts/make-icons.mjs` rasterizes the flame-orb m
 ### Process
 - `npm run check` = unit tests + simulator. Run before each commit per CLAUDE.md. CI runs the tests again before every deploy.
 - `.claude/` (local preview config) is git-ignored.
+
+## Acting on PLAYTEST.md
+
+### 2026-11-01 8:42 PM, Milestone 1
+- **"We don't need the Tap to Gather Ki mechanic. Let the function be just automatic."** Removed tapping entirely: the `gather` function, the tap stat, the tap config and the tap handler. Ki is now purely automatic. The home orb stays as a visual that grows with Ki/s; it is non-interactive for now. (SPEC's Focus Burst, a hold-to-charge bonus, is a separate optional mechanic planned for Milestone 2; I will raise with the owner whether to keep it, since this note suggests they prefer no manual Ki input.) Old saves load fine: the extra `taps` field is simply ignored.
+- **"The wait for 1000 Ki to unlock Dojo ... is sharp."** Two changes. (1) Placeholder income raised from 1 to 4 Ki/s, so Dojo arrives at about 4 minutes, in line with the SPEC target of about 5 minutes. (2) The "Unlocks in" list now shows a one-line description under each zone, so the player knows what the Dojo does before reaching it. Real pacing comes with the drill economy in Milestone 2.
+- "Proceed as is appropriate": read as general approval of direction, not as confirmation of Milestone 1, so Milestone 2 has not been started.

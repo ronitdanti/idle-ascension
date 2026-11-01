@@ -10,9 +10,8 @@ export const CONFIG = {
   /** Longest single frame the loop will simulate at normal speed. */
   maxFrameDt: 1,
 
-  /** Placeholder Ki economy until Training Grounds arrives in Milestone 2. */
-  baseKiPerSec: 1,
-  tapKi: 1,
+  /** Placeholder automatic Ki income until Training Grounds arrives in Milestone 2. */
+  baseKiPerSec: 4,
 
   offlineCapSec: 12 * 3600,
   restedCapSec: 4 * 3600,

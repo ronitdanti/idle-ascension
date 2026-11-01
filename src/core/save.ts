@@ -112,7 +112,6 @@ export function parseSave(raw: unknown, migrations: Migrations = MIGRATIONS): Ga
     unlocked,
     flags: boolMap(data.flags),
     stats: {
-      taps: num(stats.taps, 0, 0),
       playTimeSec: num(stats.playTimeSec, 0, 0),
       offlineSec: num(stats.offlineSec, 0, 0),
       sessions: num(stats.sessions, 1, 1),
